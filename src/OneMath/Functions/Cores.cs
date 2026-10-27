@@ -446,13 +446,4 @@ internal static class Cores
         DD e = ExpM1(2.0 * x, out _);
         return e / (e + 2.0);
     }
-
-    // ---------------------------------------------------------------- pow
-
-    /// <summary>x^y for positive finite x as <c>m * 2^k</c>; |y log x| must be below about 1000.</summary>
-    public static DD Pow(double x, double y, out int k)
-    {
-        DD t = Log(x) * y;
-        return Exp(t, out k);
-    }
 }

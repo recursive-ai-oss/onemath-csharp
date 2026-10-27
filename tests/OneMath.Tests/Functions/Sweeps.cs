@@ -58,9 +58,18 @@ public class Sweeps
     /// <summary>True when the screening value cannot settle which float the exact value rounds to.</summary>
     private static bool NeedsExact32(double d, float ours)
     {
-        if (!double.IsFinite(d) || d == 0)
+        // Clear overflow and underflow need no exact check; only the region within 1e-4 of the thresholds does.
+        if (double.IsNaN(d))
         {
-            return true;
+            return !float.IsNaN(ours);
+        }
+        if (d == 0 || Math.Abs(d) < 5e-46)
+        {
+            return ours != 0;
+        }
+        if (double.IsInfinity(d) || Math.Abs(d) > 3.4029e38)
+        {
+            return !float.IsInfinity(ours) || (d < 0) != (ours < 0);
         }
         float f = (float)d;
         if (BitConverter.SingleToInt32Bits(f) != BitConverter.SingleToInt32Bits(ours))
@@ -116,6 +125,10 @@ public class Sweeps
         {
             t.Special++;
             float want = (float)d;
+            if (a == 0 && want == 0 && s.Name == "expm1")
+            {
+                want = a; // the screen's series loses the sign of zero; IEEE keeps it (checked in SpecialValueTests)
+            }
             if (!(float.IsNaN(want) && float.IsNaN(ours)) && BitConverter.SingleToInt32Bits(want) != BitConverter.SingleToInt32Bits(ours))
             {
                 t.Bad++;

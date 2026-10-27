@@ -81,6 +81,37 @@ public class SpecialValueTests
     }
 
     [Fact]
+    public void Every_NaN_result_is_the_canonical_NaN()
+    {
+        double[] nans = [BitConverter.UInt64BitsToDouble(0x7FF8000000000123UL), BitConverter.UInt64BitsToDouble(0xFFF0000000000001UL)];
+        foreach (Spec s in Table.All)
+        {
+            foreach (double n in nans)
+            {
+                // pow(x, 0) and pow(1, y) are 1 by definition even for NaN; every other NaN operand gives NaN.
+                double[] others = s.Binary ? [n, 0.5, 2.0] : [0.0];
+                foreach (double o in others)
+                {
+                    double r1 = s.F64(n, o);
+                    double r2 = s.Binary ? s.F64(o, n) : r1;
+                    foreach (double r in new[] { r1, r2 })
+                    {
+                        if (double.IsNaN(r))
+                        {
+                            Assert.Equal(BitConverter.DoubleToInt64Bits(double.NaN), BitConverter.DoubleToInt64Bits(r));
+                        }
+                    }
+                    float f = s.F32((float)n, (float)o);
+                    if (float.IsNaN(f))
+                    {
+                        Assert.Equal(BitConverter.SingleToInt32Bits(float.NaN), BitConverter.SingleToInt32Bits(f));
+                    }
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void Exact_integer_results_and_ties()
     {
         Assert.Equal(8.0, Math64.Exp2(3.0));

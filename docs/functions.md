@@ -13,8 +13,8 @@
 
 Each call produces a value `v` with a known relative error bound `δ`, then asks Ziv's question (Ziv 1991; Muller, *Elementary Functions*, ch. 10): do all reals in `v(1 ± δ)` round to the same output? If yes, that output is correct. If not, the next, more accurate stage runs.
 
-1. **Fast stage** (`Fast.cs`, tables in `FastTables.cs`): table-driven, plain double arithmetic plus error-free transformations; relative error ≤ 2^-62 .. 2^-65 depending on the function (bounds below). Decides ≈ 99% of double and ≈ 99.99999% of float32 results.
-2. **Double-double stage** (`Cores.cs`, `DD.cs`): relative error ≈ 2^-100 (measured ≤ 2^-96 for every function, `pow` ≈ 2^-96, others ≈ 2^-103). Taylor-type series with exact-rational coefficients computed at start-up by double-double division. Decides all but about 1 double in 2^31 (and effectively no float32).
+1. **Fast stage** (`Fast.cs`, tables in `FastTables.cs`): table-driven, plain double arithmetic plus error-free transformations; relative error ≤ 2^-62 .. 2^-65 depending on the function (bounds below). Decides 98–99.8% of double results (measured per function below) and all but a few in 10^6 of float32 results.
+2. **Double-double stage** (`Cores.cs`, `DD.cs`): relative error ≈ 2^-100 (measured: `pow` 2^-96, `exp`/`exp2` 2^-106, the rest 2^-101 to 2^-105). Taylor-type series with exact-rational coefficients computed at start-up by double-double division. Decides all but about 1 double in 2^31 (and effectively no float32).
 3. **Exact stage** (`Exact/`): about 500 bits using `BigInteger`, then one rounding. Used when the double-double test fails, when a double result is subnormal or at the overflow edge, and for `hypot`/`cbrt` ties (exact integer roots with a sticky bit). This stage shares no code with the other two, and it is what the tests treat as ground truth, alongside an independent mpmath (Python) run for the known-answer file.
 
 Rounding test, double result from a double-double `(hi, lo)` with bound `δ`: `err = |hi| δ`; `a = hi + (lo + err)`, `b = hi + (lo - err)`; the result is decided iff `a == b` (monotonicity of rounding), and equals `a`. The result must be a normal double, otherwise stage 3 runs. Float32: `f = (float) hi`, `d = (hi - f) + lo`, compared with half the distance to the neighbouring float in the direction of `d`, with margin `err + 2.3e-16 |d|`; inconclusive or overflowing results go to the next stage.
@@ -25,7 +25,7 @@ The declared δ for stages 1 and 2 are the *inputs to the test*; they are valida
 
 - **Representation.** `DD` is an unevaluated sum `Hi + Lo`, |Lo| ≤ ulp(Hi)/2. `TwoSum` is Knuth's, `TwoProd` is Dekker/Veltkamp splitting with constant 2^27+1 (no fused multiply-add; inputs below 2^996 in magnitude — callers scale first). `+`: accurate variant (relative error < 2^-103); `*`: < 2^-103; `/`: three quotient digits (< 2^-102); `sqrt`: one Karp–Markstein step.
 - **Results as `m · 2^k`.** Cores return a double-double mantissa and a separate integer exponent, so the rounding test runs on a value near 1 and the scaling by `2^k` is exact. A double result that would be subnormal or overflow goes to stage 3.
-- **Tiny arguments.** `sin tan asin atan sinh tanh x → x` and `cos, cosh → 1` for |x| < 2^-27; `expm1, log1p x → x` for |x| < 2^-55 (the dropped term is below a quarter of the smallest rounding half-gap; the tests cover the boundary). `tanh(x) = ±1` for |x| ≥ 22.
+- **Tiny arguments.** `sin tan asin atan sinh tanh x → x` and `cos, cosh → 1` for |x| < 2^-27; `expm1, log1p x → x` for |x| < 2^-55 (the first dropped term is at most 2^-56 of x, below the smallest rounding half-gap 2^-54 of x; this is the argument, and the known-answer and exhaustive float32 runs cross-check it). `tanh(x) = ±1` for |x| ≥ 22.
 - **Thresholds** that return `±∞`/`0` directly are far outside the range where the result could still be finite (`exp`: x > 710 or x < -746; `exp2`: |x| > 1100; `sinh/cosh`: |x| > 711); anything between a threshold and the true boundary is decided by the stages.
 
 ## Methods per function
@@ -52,7 +52,7 @@ Constants (π/2 and ln 2 parts, 1/ln 2, 1/ln 10, π, 2/π bits for reduction, th
 ## Correct rounding: how it is established
 
 - **float32 (2^32 inputs, all 17 unary functions): exhaustive.** Every bit pattern is run; the platform's `Math.*` (double, accurate to ≲ 2^-50) screens each result, and every input whose float rounding the screen cannot settle (within 2^-40 of a rounding boundary — about 5·10^4 inputs per function) or where the result differs from the screened one is checked against the exact stage. Counts of non-correctly-rounded results: see the table. `atan2`, `pow`, `hypot` (two arguments): 4·10^7 random pairs each through the same procedure.
-- **double: argument for correctness plus sampling.** Stage 2 decides a result only when its interval `v(1 ± 2^-85)` rounds uniquely, and the measured stage-2 error is ≤ 2^-96, so a double is wrong only if stage 2's error exceeded its declared bound by 2^11 — a claim the tests probe on 2·10^7 inputs per function (including ≈ 2·10^5 compared with the exact stage per function) and 8·10^3 per-function error measurements against the exact stage. Everything the tests could not settle goes to stage 3, which uses 500 bits. That is the standard argument of CRlibm/CORE-MATH-style two-step schemes; the unproved part is only that the polynomial/table error bound declared for stages 1 and 2 holds on every input, which is measured, not proved. Known hard cases cited: the argument-reduction worst case above; exact results (`exp2` integers, `log2` of powers of two, `cbrt`, `hypot`, `pow` with exact results) are in the known-answer file and special-case tests, including exact ties on subnormal boundaries (`exp2(-1075)`, `pow(2, -1075)`, `pow(4, -537)`). We did not reproduce the published worst-case tables for double (their inputs are not in the sources we may use); the exact stage is available as the arbiter on any input (`Exact.Eval`, internal; the tests call it).
+- **double: argument for correctness plus sampling.** Stage 2 decides a result only when its interval `v(1 ± 2^-85)` rounds uniquely, and the measured stage-2 error is ≤ 2^-96, so a double is wrong only if stage 2's error exceeded its declared bound by 2^11 — a claim the tests probe on 2·10^7 inputs per function (including ≈ 2·10^5 compared with the exact stage per function) and 1.6·10^4 per-function error measurements against the exact stage. Everything the tests could not settle goes to stage 3, which uses 500 bits. That is the standard argument of CRlibm/CORE-MATH-style two-step schemes; the unproved part is only that the polynomial/table error bound declared for stages 1 and 2 holds on every input, which is measured, not proved. Known hard cases cited: the argument-reduction worst case above; exact results (`exp2` integers, `log2` of powers of two, `cbrt`, `hypot`, `pow` with exact results) are in the known-answer file and special-case tests, including exact ties on subnormal boundaries (`exp2(-1075)`, `pow(2, -1075)`, `pow(4, -537)`). We did not reproduce the published worst-case tables for double (their inputs are not in the sources we may use); the exact stage is available as the arbiter on any input (`Exact.Eval`, internal; the tests call it).
 
 ## Hash matrix
 
@@ -68,3 +68,50 @@ Scenarios `functions/<fn>/f64|f32` (20 functions + `sincos`): 2000 pseudo-random
 | Stage-1 error bound | `FastStageTests` |
 | float32 exhaustive, binary float32 random, double random | `Sweeps` (off unless `ONEMATH_SWEEP=float|double`) |
 | Speed against `Math`/`MathF` | `bench/Micro/FunctionsBench.cs` |
+
+## Results (this build; every row is reproducible with the commands in the last section)
+
+**float32, all 2^32 inputs, one run per function (nothing differed from the exact stage):**
+
+| Function | inputs checked against the exact stage after screening | not correctly rounded |
+|---|---|---|
+| sin / cos / tan | 62,974 / 64,990 / 56,584 | 0 / 0 / 0 |
+| asin / acos / atan | 5,332 / 11,939 / 21,954 | 0 / 0 / 0 |
+| exp / exp2 / expm1 | 13,614 / 14,038 / 13,079 | 0 / 0 / 0 |
+| log / log2 / log10 / log1p | 50,630 / 55,097 / 51,331 / 36,070 | 0 / 0 / 0 / 0 |
+| cbrt / sinh / cosh / tanh | 103,318 / 7,916 / 6,324 / 6,720 | 0 / 0 / 0 / 0 |
+| atan2 / pow / hypot, 4·10^7 random pairs each (hypot: 1.6·10^7 finite pairs) | 876 / 432 / 4 | 0 / 0 / 0 |
+
+NaN, ±0, ±∞ and out-of-domain inputs (up to half of all bit patterns for the inverse trigonometric and logarithmic functions) are compared with the platform's result, including sign of zero (`expm1(-0)` keeps its sign here; the runtime's series screen does not, which is a screen artifact).
+
+**double, 2·10^7 inputs per function** (generators in `Table.cs`: uniform and log-uniform over the function's range, near ±1 for asin/acos, integer and fractional exponents for pow): 2·10^5 per function compared with the exact stage: **0 differences for all 20 functions**. The rate at which the fast stage could not decide and the slow stage ran (per 5·10^4 probed inputs): sin 108, cos 122, tan 120, asin 115, acos 160, atan 124, atan2 161, exp 909, exp2 902, expm1 281, log 512, log2 205, log10 504, pow 1200, sinh 331, cosh 389, tanh 442 — 0.2% to 2.4%. Stage-2 error was measured against the exact stage on 1.6·10^4 inputs per function (before the fast stage existed, so the double-double stage was the one measured) and never exceeded 2^-96 against a declared 2^-85 (pow: 2^-80).
+
+**Fast-stage error bound (stage 1 against stage 2, ≥ 4·10^6 inputs per function, `FastStageTests`)** — worst relative error seen and the bound handed to the rounding test:
+
+| Function | worst seen | bound used |
+|---|---|---|
+| sin, cos, tan | 2^-67.5 | 2^-62 |
+| asin, acos, atan, atan2 | 2^-66.4 | 2^-62 |
+| exp, exp2 | 2^-64.7 | 2^-61 |
+| expm1 | 2^-63.6 | 2^-60 |
+| log, log2, log10 | 2^-63.1 | 2^-60 |
+| sinh, cosh, tanh | 2^-63.8 | 2^-60 |
+| pow | 2^-62.1 | 2^-61 + \|y log x\|·2^-62 (at least 3 bits below its bound on every sample) |
+
+**Speed, indicative only** (one shared development machine under load, single thread, 10^5 inputs, best of 5; not a gate measurement): ours / `Math`: sin 2.8×, cos 4.3×, tan 4.9×, asin 9×, acos 11×, atan 12×, atan2 5.5×, exp 12×, exp2 7.7×, log 15×, log2 14×, log10 12×, pow 16×, cbrt 10×, hypot 4.8×, sinh 13×, cosh 21×, tanh 12×. Before the fast stage (double-double stage only) the ratios were 11× to 73×. Where the time goes is the double-double glue (a few dozen flops per call beyond the table-and-polynomial core) and the by-value `R` record.
+
+**Hash matrix** (`functions/*`, 42 scenarios, manifest `12f01fe38319903cec79bea6cdb88a6a04447cec418d13b7aec71d6dd5b660d6`): equal on x64 default, `DOTNET_EnableHWIntrinsic=0`, `DOTNET_EnableAVX2=0` with 4 threads, `TieredCompilation=0`, quick-jit-for-loops off, NativeAOT x64, osx-arm64 and browser-wasm (Node). The same manifest was produced before and after the fast stage was added.
+
+## Reproducing
+
+```
+# known answers (needs mpmath):   python3 tools/GenConstants/gen_kat.py > testdata/functions/kat.txt
+# tables and constants:           python3 tools/GenConstants/gen_tables.py > src/OneMath/Functions/FastTables.cs
+#                                 python3 tools/GenConstants/gen_constants.py > src/OneMath/Functions/Constants.cs
+dotnet test tests/OneMath.Tests -c Release                       # unit tests, error bounds, known answers
+ONEMATH_SWEEP=float  ONEMATH_FN=exp dotnet test --no-build -c Release tests/OneMath.Tests --filter-method '*Float32_exhaustive_unary'   # one function, ~2-6 min on 8 threads
+ONEMATH_SWEEP=float  ONEMATH_N=40000000 dotnet test ... --filter-method '*Float32_random_binary'
+ONEMATH_SWEEP=double ONEMATH_N=20000000 ONEMATH_EXACT_EVERY=100 dotnet test ... --filter-method '*Double_random'
+dotnet run -c Release --project bench/Micro -- --filter '*FunctionsBench*'   # speed against Math/MathF, ~20-25 min (add --job short for ~8 min)
+dotnet run -c Release --project tools/HashMatrix -- --filter functions/       # hash-matrix manifest
+```

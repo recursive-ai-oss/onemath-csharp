@@ -44,6 +44,40 @@ internal static class Table
 {
     private static double Cbrt(double x) => Math.Cbrt(x);
 
+    // The runtime's expm1/log1p are plain exp(x) - 1 and log(1 + x), which lose the low bits for small x; the screens
+    // use short series there (relative error far below the 1e-12 margin the sweeps allow).
+    private static double Expm1Screen(double x)
+    {
+        if (Math.Abs(x) < 0.05)
+        {
+            double t = x;
+            double sum = x;
+            for (int n = 2; n < 16; n++)
+            {
+                t = t * x / n;
+                sum += t;
+            }
+            return sum;
+        }
+        return Math.Exp(x) - 1.0;
+    }
+
+    private static double Log1pScreen(double x)
+    {
+        if (Math.Abs(x) < 0.01)
+        {
+            double t = x;
+            double sum = x;
+            for (int n = 2; n < 14; n++)
+            {
+                t *= -x;
+                sum += t / n;
+            }
+            return sum;
+        }
+        return Math.Log(1.0 + x);
+    }
+
     public static readonly Spec[] All =
     [
         new("sin", Fn.Sin, false, (x, _) => Math.Sin(x), (x, _) => Math32.Sin(x), (x, _) => Math64.Sin(x), TrigGen),
@@ -55,11 +89,11 @@ internal static class Table
         new("atan2", Fn.Atan2, true, Math.Atan2, Math32.Atan2, Math64.Atan2, r => (r.Sign() * r.LogU(-30, 30), r.Sign() * r.LogU(-30, 30))),
         new("exp", Fn.Exp, false, (x, _) => Math.Exp(x), (x, _) => Math32.Exp(x), (x, _) => Math64.Exp(x), r => (r.Unit() < 0.5 ? r.Uniform(-745, 709) : r.Uniform(-4, 4), 0)),
         new("exp2", Fn.Exp2, false, (x, _) => Math.Pow(2.0, x), (x, _) => Math32.Exp2(x), (x, _) => Math64.Exp2(x), r => (r.Unit() < 0.5 ? r.Uniform(-1074, 1023) : r.Uniform(-5, 5), 0)),
-        new("expm1", Fn.Expm1, false, (x, _) => double.ExpM1(x), (x, _) => Math32.Expm1(x), (x, _) => Math64.Expm1(x), r => (r.Unit() < 0.5 ? r.Uniform(-40, 709) : r.Sign() * r.LogU(-50, 0), 0)),
+        new("expm1", Fn.Expm1, false, (x, _) => Expm1Screen(x), (x, _) => Math32.Expm1(x), (x, _) => Math64.Expm1(x), r => (r.Unit() < 0.5 ? r.Uniform(-40, 709) : r.Sign() * r.LogU(-50, 0), 0)),
         new("log", Fn.Log, false, (x, _) => Math.Log(x), (x, _) => Math32.Log(x), (x, _) => Math64.Log(x), LogGen),
         new("log2", Fn.Log2, false, (x, _) => Math.Log2(x), (x, _) => Math32.Log2(x), (x, _) => Math64.Log2(x), LogGen),
         new("log10", Fn.Log10, false, (x, _) => Math.Log10(x), (x, _) => Math32.Log10(x), (x, _) => Math64.Log10(x), LogGen),
-        new("log1p", Fn.Log1p, false, (x, _) => double.LogP1(x), (x, _) => Math32.Log1p(x), (x, _) => Math64.Log1p(x), r => (r.Unit() < 0.5 ? r.Sign() * r.LogU(-50, -1) : r.LogU(-1, 60), 0)),
+        new("log1p", Fn.Log1p, false, (x, _) => Log1pScreen(x), (x, _) => Math32.Log1p(x), (x, _) => Math64.Log1p(x), r => (r.Unit() < 0.5 ? r.Sign() * r.LogU(-50, -1) : r.LogU(-1, 60), 0)),
         new("cbrt", Fn.Cbrt, false, (x, _) => Cbrt(x), (x, _) => Math32.Cbrt(x), (x, _) => Math64.Cbrt(x), r => (r.Sign() * r.LogU(-1074, 1023), 0)),
         new("hypot", Fn.Hypot, true, (x, y) => double.Hypot(x, y), Math32.Hypot, Math64.Hypot, r => (r.Sign() * r.LogU(-500, 500), r.Sign() * r.LogU(-500, 500))),
         new("pow", Fn.Pow, true, Math.Pow, Math32.Pow, Math64.Pow, r => (r.LogU(-30, 30), r.Uniform(-30, 30))),

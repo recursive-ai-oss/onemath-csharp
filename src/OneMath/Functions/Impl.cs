@@ -33,7 +33,7 @@ internal struct R
     {
         if (IsSpecial)
         {
-            return V;
+            return double.IsNaN(V) ? double.NaN : V; // one canonical NaN, whatever payload came in
         }
         double r;
         if (!ExactOnly && Rounding.ToDouble(M, K, Delta, out r))
@@ -55,7 +55,7 @@ internal struct R
     {
         if (IsSpecial)
         {
-            return (float)V;
+            return double.IsNaN(V) ? float.NaN : (float)V;
         }
         float r;
         if (!ExactOnly && K > -900 && K < 900 && Rounding.ToSingle(M.Scale(Pow2.Scale(1.0, K)), Delta, out r))
