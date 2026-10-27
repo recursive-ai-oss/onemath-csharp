@@ -6,7 +6,9 @@ namespace RecursiveAI.OneMath.HashMatrix;
 /// <summary>
 /// Collects the bytes a scenario produces. The runner hashes them with SHA-256; two platforms agree
 /// on a scenario exactly when they feed it identical bytes. All writers are little-endian and
-/// write floating-point values by their bit patterns, so NaN payloads and signed zeros count.
+/// write floating-point values by their bit patterns, so signed zeros count. Every NaN is written as the
+/// same canonical quiet NaN, because the sign and payload of a NaN produced by arithmetic is chosen by the
+/// CPU (x64 and arm64 differ), not by this library.
 /// </summary>
 public sealed class ScenarioContext
 {
@@ -38,14 +40,14 @@ public sealed class ScenarioContext
     /// <summary>Appends the bit pattern of a float32.</summary>
     public void Write(float value)
     {
-        BinaryPrimitives.WriteInt32LittleEndian(_scratch, BitConverter.SingleToInt32Bits(value));
+        BinaryPrimitives.WriteInt32LittleEndian(_scratch, float.IsNaN(value) ? 0x7fc00000 : BitConverter.SingleToInt32Bits(value));
         _hash.Append(_scratch.AsSpan(0, 4));
     }
 
     /// <summary>Appends the bit pattern of a double.</summary>
     public void Write(double value)
     {
-        BinaryPrimitives.WriteInt64LittleEndian(_scratch, BitConverter.DoubleToInt64Bits(value));
+        BinaryPrimitives.WriteInt64LittleEndian(_scratch, double.IsNaN(value) ? 0x7ff8000000000000L : BitConverter.DoubleToInt64Bits(value));
         _hash.Append(_scratch.AsSpan(0, 8));
     }
 
