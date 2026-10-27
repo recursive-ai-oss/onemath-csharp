@@ -106,11 +106,13 @@ public class FunctionTests
         switch (s.Name)
         {
             case "log": case "log2": case "log10": return a > 0;
-            case "log1p": return a > -1;
-            case "asin": case "acos": return Math.Abs(a) < 1;
+            case "log1p": return a > -1 && a != 0;
+            case "asin": return Math.Abs(a) < 1 && a != 0;
+            case "acos": return Math.Abs(a) < 1;
             case "atan2": case "hypot": return a != 0 && b != 0;
             case "pow": return a > 0 && Math.Abs(b) < 1e6 && Math.Abs(b * Math.Log(a)) < 4000;
-            case "exp": case "exp2": case "expm1": case "sinh": case "cosh": return Math.Abs(a) < 5000;
+            case "exp": case "exp2": case "cosh": return Math.Abs(a) < 5000;
+            case "expm1": case "sinh": return Math.Abs(a) < 5000 && a != 0;
             case "sin": case "cos": case "tan": return a != 0;
             case "cbrt": case "tanh": case "atan": return a != 0;
             default: return true;

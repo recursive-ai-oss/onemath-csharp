@@ -136,7 +136,7 @@ internal static class Cores
     }
 
     /// <summary>e * ln 2 as a double-double (|e| below 4096).</summary>
-    private static DD MulLn2(int e)
+    internal static DD MulLn2(int e)
     {
         double de = e;
         DD s = DD.TwoSum(de * Consts.Ln2Part1, de * Consts.Ln2Part2);

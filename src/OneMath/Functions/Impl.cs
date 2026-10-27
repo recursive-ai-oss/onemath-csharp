@@ -15,11 +15,15 @@ internal struct R
     public double B;
     public bool Neg;      // negate the final result (odd symmetry, odd powers)
     public bool ExactOnly;
+    public bool Fast;     // M is from the fast stage: on a failed rounding test, re-evaluate with the slow stage first
 
     public static R Special(double v) => new() { IsSpecial = true, V = v };
 
     public static R Dd(DD m, int k, double delta, Fn fn, double a, double b, bool neg = false) =>
         new() { M = m, K = k, Delta = delta, Fn = fn, A = a, B = b, Neg = neg };
+
+    public static R DdFast(DD m, int k, double delta, Fn fn, double a, double b, bool neg = false) =>
+        new() { M = m, K = k, Delta = delta, Fn = fn, A = a, B = b, Neg = neg, Fast = true };
 
     public static R ViaExact(Fn fn, double a, double b, bool neg = false) =>
         new() { Fn = fn, A = a, B = b, Neg = neg, ExactOnly = true };
@@ -34,6 +38,11 @@ internal struct R
         double r;
         if (!ExactOnly && Rounding.ToDouble(M, K, Delta, out r))
         {
+            return Neg ? -r : r;
+        }
+        if (Fast)
+        {
+            r = Impl.ByFn(Fn, A, B).ToDouble();
             return Neg ? -r : r;
         }
         BF v = Exact.Eval(Fn, A, B, out bool sticky);
@@ -51,6 +60,11 @@ internal struct R
         float r;
         if (!ExactOnly && K > -900 && K < 900 && Rounding.ToSingle(M.Scale(Pow2.Scale(1.0, K)), Delta, out r))
         {
+            return Neg ? -r : r;
+        }
+        if (Fast)
+        {
+            r = Impl.ByFn(Fn, A, B).ToSingle();
             return Neg ? -r : r;
         }
         BF v = Exact.Eval(Fn, A, B, out bool sticky);
@@ -71,60 +85,104 @@ internal static class Impl
     private static readonly double s_dPow = Pow2.Of(-80);
     private static readonly double s_tiny = Pow2.Of(-27);
 
+    // Relative error bounds of the fast stage, per family (see docs/functions.md).
+    private static readonly double s_fExp = Pow2.Of(-61);
+    private static readonly double s_fExpm1 = Pow2.Of(-60);
+    private static readonly double s_fLog = Pow2.Of(-60);
+    private static readonly double s_fTrig = Pow2.Of(-62);
+    private static readonly double s_fAtan = Pow2.Of(-62);
+    private static readonly double s_fHyp = Pow2.Of(-60);
+
+    /// <summary>The slow (double-double) evaluation of <paramref name="fn"/>, used when the fast stage cannot decide the rounding.</summary>
+    public static R ByFn(Fn fn, double a, double b) => fn switch
+    {
+        Fn.Exp => Exp(a, false), Fn.Exp2 => Exp2(a, false), Fn.Expm1 => Expm1(a, false),
+        Fn.Log => Log(a, false), Fn.Log2 => Log2(a, false), Fn.Log10 => Log10(a, false), Fn.Log1p => Log1p(a),
+        Fn.Sin => Sin(a, false), Fn.Cos => Cos(a, false), Fn.Tan => Tan(a, false),
+        Fn.Asin => Asin(a, false), Fn.Acos => Acos(a, false), Fn.Atan => Atan(a, false), Fn.Atan2 => Atan2(a, b, false),
+        Fn.Sinh => Sinh(a, false), Fn.Cosh => Cosh(a, false), Fn.Tanh => Tanh(a, false),
+        Fn.Pow => Pow(a, b, false), Fn.Cbrt => Cbrt(a), Fn.Hypot => Hypot(a, b),
+        _ => throw new ArgumentOutOfRangeException(nameof(fn)),
+    };
+
     private static R Nan => R.Special(double.NaN);
 
-    public static R Exp(double x)
+    public static R Exp(double x, bool fast = true)
     {
         if (double.IsNaN(x)) { return Nan; }
         if (x > 710.0) { return R.Special(double.PositiveInfinity); }
         if (x < -746.0) { return R.Special(0.0); }
+        if (fast && Fast.Exp(new DD(x), out DD fm, out int fk))
+        {
+            return R.DdFast(fm, fk, s_fExp, Fn.Exp, x, 0);
+        }
         DD m = Cores.Exp(new DD(x), out int k);
         return R.Dd(m, k, s_d, Fn.Exp, x, 0);
     }
 
-    public static R Exp2(double x)
+    public static R Exp2(double x, bool fast = true)
     {
         if (double.IsNaN(x)) { return Nan; }
         if (x > 1100.0) { return R.Special(double.PositiveInfinity); }
         if (x < -1100.0) { return R.Special(0.0); }
+        if (fast && Fast.Exp2(x, out DD fm, out int fk))
+        {
+            return R.DdFast(fm, fk, s_fExp, Fn.Exp2, x, 0);
+        }
         DD m = Cores.Exp2(x, out int k);
         return R.Dd(m, k, s_d, Fn.Exp2, x, 0);
     }
 
-    public static R Expm1(double x)
+    public static R Expm1(double x, bool fast = true)
     {
         if (double.IsNaN(x)) { return Nan; }
         if (x > 710.0) { return R.Special(double.PositiveInfinity); }
         if (x < -38.0) { return R.Special(-1.0); }
         if (Math.Abs(x) < Pow2.Of(-55)) { return R.Special(x); }
+        if (fast && Fast.Expm1(x, out DD fm, out int fk))
+        {
+            return R.DdFast(fm, fk, s_fExpm1, Fn.Expm1, x, 0);
+        }
         DD m = Cores.ExpM1(x, out int k);
         return R.Dd(m, k, s_d, Fn.Expm1, x, 0);
     }
 
-    public static R Log(double x)
+    public static R Log(double x, bool fast = true)
     {
         if (double.IsNaN(x) || x < 0.0) { return Nan; }
         if (x == 0.0) { return R.Special(double.NegativeInfinity); }
         if (double.IsPositiveInfinity(x)) { return R.Special(x); }
         if (x == 1.0) { return R.Special(0.0); }
+        if (fast && Fast.Log(x, out DD fl))
+        {
+            return R.DdFast(fl, 0, s_fLog, Fn.Log, x, 0);
+        }
         return R.Dd(Cores.Log(x), 0, s_d, Fn.Log, x, 0);
     }
 
-    public static R Log2(double x)
+    public static R Log2(double x, bool fast = true)
     {
         if (double.IsNaN(x) || x < 0.0) { return Nan; }
         if (x == 0.0) { return R.Special(double.NegativeInfinity); }
         if (double.IsPositiveInfinity(x)) { return R.Special(x); }
         if (x == 1.0) { return R.Special(0.0); }
+        if (fast && Fast.Log(x, out DD fl))
+        {
+            return R.DdFast(fl * Consts.InvLn2, 0, s_fLog, Fn.Log2, x, 0);
+        }
         return R.Dd(Cores.Log(x) * Consts.InvLn2, 0, s_d, Fn.Log2, x, 0);
     }
 
-    public static R Log10(double x)
+    public static R Log10(double x, bool fast = true)
     {
         if (double.IsNaN(x) || x < 0.0) { return Nan; }
         if (x == 0.0) { return R.Special(double.NegativeInfinity); }
         if (double.IsPositiveInfinity(x)) { return R.Special(x); }
         if (x == 1.0) { return R.Special(0.0); }
+        if (fast && Fast.Log(x, out DD fl))
+        {
+            return R.DdFast(fl * Consts.InvLn10, 0, s_fLog, Fn.Log10, x, 0);
+        }
         return R.Dd(Cores.Log(x) * Consts.InvLn10, 0, s_d, Fn.Log10, x, 0);
     }
 
@@ -137,17 +195,25 @@ internal static class Impl
         return R.Dd(Cores.Log1p(x), 0, s_d, Fn.Log1p, x, 0);
     }
 
-    public static R Sin(double x)
+    public static R Sin(double x, bool fast = true)
     {
         if (double.IsNaN(x) || double.IsInfinity(x)) { return Nan; }
         if (Math.Abs(x) < s_tiny) { return R.Special(x); }
+        if (fast && Fast.Sin(x, out DD fv))
+        {
+            return R.DdFast(fv, 0, s_fTrig, Fn.Sin, x, 0);
+        }
         return R.Dd(Cores.Sin(x), 0, s_d, Fn.Sin, x, 0);
     }
 
-    public static R Cos(double x)
+    public static R Cos(double x, bool fast = true)
     {
         if (double.IsNaN(x) || double.IsInfinity(x)) { return Nan; }
         if (Math.Abs(x) < s_tiny) { return R.Special(1.0); }
+        if (fast && Fast.Cos(x, out DD fv))
+        {
+            return R.DdFast(fv, 0, s_fTrig, Fn.Cos, x, 0);
+        }
         return R.Dd(Cores.Cos(x), 0, s_d, Fn.Cos, x, 0);
     }
 
@@ -165,19 +231,29 @@ internal static class Impl
             cos = R.Special(1.0);
             return;
         }
+        if (Fast.SinCos(x, out DD fs, out DD fc))
+        {
+            sin = R.DdFast(fs, 0, s_fTrig, Fn.Sin, x, 0);
+            cos = R.DdFast(fc, 0, s_fTrig, Fn.Cos, x, 0);
+            return;
+        }
         Cores.SinCos(x, out DD s, out DD c);
         sin = R.Dd(s, 0, s_d, Fn.Sin, x, 0);
         cos = R.Dd(c, 0, s_d, Fn.Cos, x, 0);
     }
 
-    public static R Tan(double x)
+    public static R Tan(double x, bool fast = true)
     {
         if (double.IsNaN(x) || double.IsInfinity(x)) { return Nan; }
         if (Math.Abs(x) < s_tiny) { return R.Special(x); }
+        if (fast && Fast.Tan(x, out DD fv))
+        {
+            return R.DdFast(fv, 0, s_fTrig, Fn.Tan, x, 0);
+        }
         return R.Dd(Cores.Tan(x), 0, s_d, Fn.Tan, x, 0);
     }
 
-    public static R Asin(double x)
+    public static R Asin(double x, bool fast = true)
     {
         if (double.IsNaN(x) || Math.Abs(x) > 1.0) { return Nan; }
         if (Math.Abs(x) < s_tiny) { return R.Special(x); }
@@ -185,18 +261,31 @@ internal static class Impl
         {
             return R.Dd(x < 0 ? -Consts.PiOver2 : Consts.PiOver2, 0, s_d, Fn.Asin, x, 0);
         }
+        if (fast)
+        {
+            double fax = Math.Abs(x);
+            DD fden = DD.Sqrt(new DD(1.0) - DD.TwoProd(fax, fax));
+            DD fa = Fast.Atan(new DD(fax) / fden);
+            return R.DdFast(x < 0 ? -fa : fa, 0, s_fAtan, Fn.Asin, x, 0);
+        }
         return R.Dd(Cores.Asin(x), 0, s_d, Fn.Asin, x, 0);
     }
 
-    public static R Acos(double x)
+    public static R Acos(double x, bool fast = true)
     {
         if (double.IsNaN(x) || Math.Abs(x) > 1.0) { return Nan; }
         if (x == 1.0) { return R.Special(0.0); }
         if (x == -1.0) { return R.Dd(Consts.Pi, 0, s_d, Fn.Acos, x, 0); }
+        if (fast)
+        {
+            DD fq = DD.TwoSum(1.0, -x) / DD.TwoSum(1.0, x);
+            DD fa = Fast.Atan(DD.Sqrt(fq));
+            return R.DdFast(new DD(fa.Hi * 2.0, fa.Lo * 2.0), 0, s_fAtan, Fn.Acos, x, 0);
+        }
         return R.Dd(Cores.Acos(x), 0, s_d, Fn.Acos, x, 0);
     }
 
-    public static R Atan(double x)
+    public static R Atan(double x, bool fast = true)
     {
         if (double.IsNaN(x)) { return Nan; }
         if (Math.Abs(x) < s_tiny) { return R.Special(x); }
@@ -204,13 +293,18 @@ internal static class Impl
         {
             return R.Dd(x < 0 ? -Consts.PiOver2 : Consts.PiOver2, 0, s_d, Fn.Atan, x, 0);
         }
+        if (fast)
+        {
+            DD fa = Fast.Atan(new DD(Math.Abs(x)));
+            return R.DdFast(x < 0 ? -fa : fa, 0, s_fAtan, Fn.Atan, x, 0);
+        }
         DD a = Cores.Atan(new DD(Math.Abs(x)));
         return R.Dd(x < 0 ? -a : a, 0, s_d, Fn.Atan, x, 0);
     }
 
     private static int Exponent(double v) => (int)((BitConverter.DoubleToInt64Bits(v) >> 52) & 0x7FF) - 1023;
 
-    public static R Atan2(double y, double x)
+    public static R Atan2(double y, double x, bool fast = true)
     {
         if (double.IsNaN(x) || double.IsNaN(y)) { return Nan; }
         bool yneg = double.IsNegative(y);
@@ -256,11 +350,11 @@ internal static class Impl
         DD a;
         if (sy <= sx)
         {
-            a = Cores.Atan(new DD(sy) / new DD(sx));
+            a = fast ? Fast.Atan(new DD(sy) / new DD(sx)) : Cores.Atan(new DD(sy) / new DD(sx));
         }
         else
         {
-            a = Consts.PiOver2 - Cores.Atan(new DD(sx) / new DD(sy));
+            a = Consts.PiOver2 - (fast ? Fast.Atan(new DD(sx) / new DD(sy)) : Cores.Atan(new DD(sx) / new DD(sy)));
         }
         if (xneg)
         {
@@ -270,16 +364,20 @@ internal static class Impl
         {
             return R.ViaExact(Fn.Atan2, y, x);
         }
-        return R.Dd(yneg ? -a : a, 0, s_d, Fn.Atan2, y, x);
+        return fast ? R.DdFast(yneg ? -a : a, 0, s_fAtan, Fn.Atan2, y, x) : R.Dd(yneg ? -a : a, 0, s_d, Fn.Atan2, y, x);
     }
 
-    public static R Sinh(double x)
+    public static R Sinh(double x, bool fast = true)
     {
         if (double.IsNaN(x) || double.IsInfinity(x) || x == 0.0) { return R.Special(x); }
         double ax = Math.Abs(x);
         if (ax < s_tiny) { return R.Special(x); }
         bool neg = x < 0;
         if (ax > 711.0) { return R.Special(neg ? double.NegativeInfinity : double.PositiveInfinity); }
+        if (fast && Fast.Sinh(ax, out DD fv))
+        {
+            return R.DdFast(fv, 0, s_fHyp, Fn.Sinh, ax, 0, neg);
+        }
         if (ax < 35.0)
         {
             return R.Dd(Cores.Sinh(ax), 0, s_d, Fn.Sinh, ax, 0, neg);
@@ -288,12 +386,16 @@ internal static class Impl
         return R.Dd(m, k - 1, s_d, Fn.Sinh, ax, 0, neg);
     }
 
-    public static R Cosh(double x)
+    public static R Cosh(double x, bool fast = true)
     {
         if (double.IsNaN(x)) { return Nan; }
         double ax = Math.Abs(x);
         if (double.IsInfinity(ax) || ax > 711.0) { return R.Special(double.PositiveInfinity); }
         if (ax < s_tiny) { return R.Special(1.0); }
+        if (fast && Fast.Cosh(ax, out DD fv))
+        {
+            return R.DdFast(fv, 0, s_fHyp, Fn.Cosh, ax, 0);
+        }
         if (ax < 35.0)
         {
             return R.Dd(Cores.Cosh(ax), 0, s_d, Fn.Cosh, ax, 0);
@@ -302,13 +404,17 @@ internal static class Impl
         return R.Dd(m, k - 1, s_d, Fn.Cosh, ax, 0);
     }
 
-    public static R Tanh(double x)
+    public static R Tanh(double x, bool fast = true)
     {
         if (double.IsNaN(x) || x == 0.0) { return R.Special(x); }
         double ax = Math.Abs(x);
         bool neg = x < 0;
         if (ax < s_tiny) { return R.Special(x); }
         if (ax >= 22.0) { return R.Special(neg ? -1.0 : 1.0); }
+        if (fast && Fast.Tanh(ax, out DD fv))
+        {
+            return R.DdFast(fv, 0, s_fHyp, Fn.Tanh, ax, 0, neg);
+        }
         return R.Dd(Cores.Tanh(ax), 0, s_d, Fn.Tanh, ax, 0, neg);
     }
 
@@ -334,7 +440,7 @@ internal static class Impl
 
     private static bool IsOddInteger(double y) => Math.Abs(y) < 9007199254740992.0 && y == Math.Floor(y) && (((long)y) & 1L) != 0;
 
-    public static R Pow(double x, double y)
+    public static R Pow(double x, double y, bool fast = true)
     {
         if (y == 0.0 || x == 1.0) { return R.Special(1.0); }
         if (double.IsNaN(x) || double.IsNaN(y)) { return Nan; }
@@ -364,6 +470,10 @@ internal static class Impl
         if (y == 2.0) { return R.Special(x * x); }
         if (y == -1.0) { return R.Special(1.0 / x); }
         if (y == 0.5 && x > 0) { return R.Special(Math.Sqrt(x)); }
+        if (fast && Fast.Pow(ax, y, out DD fm, out int fk, out double fd))
+        {
+            return R.DdFast(fm, fk, fd, Fn.Pow, ax, y, neg);
+        }
         DD t = Cores.Log(ax) * y;
         if (t.Hi > 710.0) { return R.Special(neg ? double.NegativeInfinity : double.PositiveInfinity); }
         if (t.Hi < -746.0) { return R.Special(neg ? -0.0 : 0.0); }
