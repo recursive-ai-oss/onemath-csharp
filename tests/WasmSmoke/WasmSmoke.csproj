@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Runs the hash-matrix scenarios on browser WebAssembly under Node (interpreted by default,
+       -p:RunAOTCompilation=true for AOT-compiled). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>RecursiveAI.OneMath.HashMatrix</RootNamespace>
+    <AssemblyName>WasmSmoke</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <WasmNativeStrip>false</WasmNativeStrip>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../tools/HashMatrix/**/*.cs" Exclude="../../tools/HashMatrix/obj/**;../../tools/HashMatrix/bin/**" LinkBase="HashMatrix" />
+    <ProjectReference Include="../../src/OneMath/OneMath.csproj" />
+  </ItemGroup>
+
+</Project>

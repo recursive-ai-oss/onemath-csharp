@@ -1,0 +1,19 @@
+# Allowlist: ignore everything at the top level, then list what is tracked.
+/*
+!/.gitignore
+!/.gitattributes
+!/global.json
+!/Directory.Build.props
+!/BannedSymbols.txt
+!/OneMath.slnx
+!/README.md
+!/LICENSE-MIT
+!/LICENSE-APACHE
+!/src
+!/tests
+!/bench
+!/tools
+!/docs
+!/testdata
+bin/
+obj/

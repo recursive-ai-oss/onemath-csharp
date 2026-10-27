@@ -1,0 +1,22 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <BuildType Name="Checked" />
+    <Platform Name="Any CPU" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/OneMath/OneMath.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OneMath.Tests/OneMath.Tests.csproj" />
+    <Project Path="tests/AotSmoke/AotSmoke.csproj" />
+    <Project Path="tests/WasmSmoke/WasmSmoke.csproj" />
+  </Folder>
+  <Folder Name="/bench/">
+    <Project Path="bench/Micro/Micro.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/HashMatrix/HashMatrix.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,27 @@
+# Determinism: only IEEE-exact + - * / and sqrt may decide a result. Transcendentals come from this library.
+M:System.Math.FusedMultiplyAdd(System.Double,System.Double,System.Double);Fused multiply-add is not allowed
+M:System.Math.ScaleB(System.Double,System.Int32);Use exact power-of-two multiplication
+M:System.Math.Sin(System.Double);Use the library's own function
+M:System.Math.Cos(System.Double);Use the library's own function
+M:System.Math.Tan(System.Double);Use the library's own function
+M:System.Math.Asin(System.Double);Use the library's own function
+M:System.Math.Acos(System.Double);Use the library's own function
+M:System.Math.Atan(System.Double);Use the library's own function
+M:System.Math.Atan2(System.Double,System.Double);Use the library's own function
+M:System.Math.Sinh(System.Double);Use the library's own function
+M:System.Math.Cosh(System.Double);Use the library's own function
+M:System.Math.Tanh(System.Double);Use the library's own function
+M:System.Math.Exp(System.Double);Use the library's own function
+M:System.Math.Log(System.Double);Use the library's own function
+M:System.Math.Log(System.Double,System.Double);Use the library's own function
+M:System.Math.Log2(System.Double);Use the library's own function
+M:System.Math.Log10(System.Double);Use the library's own function
+M:System.Math.Pow(System.Double,System.Double);Use the library's own function
+M:System.Math.Cbrt(System.Double);Use the library's own function
+M:System.Math.SinCos(System.Double);Use the library's own function
+T:System.MathF;MathF is not allowed in the library; use Math.Sqrt on double and cast only where exact
+T:System.Numerics.Vector`1;Vector<T> width is platform dependent
+M:System.Runtime.Intrinsics.Vector128.MultiplyAddEstimate(System.Runtime.Intrinsics.Vector128{System.Single},System.Runtime.Intrinsics.Vector128{System.Single},System.Runtime.Intrinsics.Vector128{System.Single});Not exact
+T:System.Runtime.Intrinsics.X86.Fma;Fused multiply-add is not allowed
+T:System.Runtime.Intrinsics.Arm.AdvSimd;Use the portable Vector128 API only
+T:System.Runtime.Intrinsics.X86.Sse;Use the portable Vector128 API only

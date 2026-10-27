@@ -1,0 +1,49 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- The package id derives from this single property. -->
+    <PackagePrefix>RecursiveAI</PackagePrefix>
+    <PackageBaseName>$(PackagePrefix).OneMath</PackageBaseName>
+    <Version>0.1.0-dev</Version>
+    <Authors>Recursive AI, LLC</Authors>
+    <Company>Recursive AI, LLC</Company>
+    <Copyright>Copyright (c) Recursive AI, LLC</Copyright>
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/recursive-ai-oss/onemath-csharp</RepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(ContinuousIntegrationBuild)' == ''">true</ContinuousIntegrationBuild>
+    <Configurations>Debug;Release;Checked</Configurations>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Floating-point results must never depend on the JIT's choices. -->
+    <TieredPGO>false</TieredPGO>
+  </PropertyGroup>
+
+  <!-- Build output never lands in the checkout. -->
+  <PropertyGroup>
+    <ArtifactsPath Condition="'$(ONEPATH_ARTIFACTS)' != ''">$(ONEPATH_ARTIFACTS)</ArtifactsPath>
+    <ArtifactsPath Condition="'$(ONEPATH_ARTIFACTS)' == ''">$(HOME)/.cache/onemath-artifacts</ArtifactsPath>
+  </PropertyGroup>
+
+  <!-- Checked: Release optimisations plus bounds-checked internal accessors (CHECKED). -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Checked'">
+    <Optimize>true</Optimize>
+    <DebugType>portable</DebugType>
+    <DefineConstants>$(DefineConstants);CHECKED</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+</Project>
