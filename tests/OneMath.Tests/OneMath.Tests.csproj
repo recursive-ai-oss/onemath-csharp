@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="../../testdata/functions/kat.txt" Link="functions/kat.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/OneMath/OneMath.csproj" />
     <ProjectReference Include="../../tools/HashMatrix/HashMatrix.csproj" />
   </ItemGroup>
