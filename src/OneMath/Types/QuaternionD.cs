@@ -2,31 +2,36 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath;
 
 /// <summary>
 /// A rotation quaternion of <see cref="double"/> components, <c>X*i + Y*j + Z*k + W</c>, with the Hamilton product.
-/// Rotation methods assume a unit quaternion; they do not renormalize. Constructors that take an angle are not
-/// provided here because they need sine and cosine: build the half-angle sine and cosine with this library's
-/// functions and pass them to <see cref="FromAxisSinCos"/>.
+/// Rotation methods assume a unit quaternion; they do not renormalize. <see cref="CreateFromAxisAngle"/> builds the half-angle sine
+/// and cosine with this library's functions and calls <see cref="CreateFromAxisSinCos"/>.
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public readonly struct QuaternionD : IEquatable<QuaternionD>
 {
     /// <summary>The X (i) component.</summary>
+    [JsonInclude]
     public readonly double X;
 
     /// <summary>The Y (j) component.</summary>
+    [JsonInclude]
     public readonly double Y;
 
     /// <summary>The Z (k) component.</summary>
+    [JsonInclude]
     public readonly double Z;
 
     /// <summary>The scalar (real) component.</summary>
+    [JsonInclude]
     public readonly double W;
 
     /// <summary>Creates a quaternion from its components.</summary>
+    [JsonConstructor]
     public QuaternionD(double x, double y, double z, double w)
     {
         X = x;
@@ -39,13 +44,14 @@ public readonly struct QuaternionD : IEquatable<QuaternionD>
     public static QuaternionD Identity => new(0, 0, 0, 1);
 
     /// <summary>The vector part (X, Y, Z).</summary>
+    [JsonIgnore]
     public Vector3D Vector => new(X, Y, Z);
 
     /// <summary>
     /// Builds the rotation about <paramref name="axis"/> (which must be a unit vector) whose half-angle has the given sine
     /// and cosine: <c>(axis * sinHalf, cosHalf)</c>. The result is not renormalized.
     /// </summary>
-    public static QuaternionD FromAxisSinCos(Vector3D axis, double sinHalf, double cosHalf) =>
+    public static QuaternionD CreateFromAxisSinCos(Vector3D axis, double sinHalf, double cosHalf) =>
         new(axis.X * sinHalf, axis.Y * sinHalf, axis.Z * sinHalf, cosHalf);
 
     /// <summary>
@@ -53,7 +59,7 @@ public readonly struct QuaternionD : IEquatable<QuaternionD>
     /// the largest of the trace and the diagonal entries picks one of four formulas, ties going to the earlier branch
     /// (trace, then M11, then M22, then M33). The result is not renormalized and has non-negative W in the trace branch.
     /// </summary>
-    public static QuaternionD FromMatrix(Matrix3x3D m)
+    public static QuaternionD CreateFromRotationMatrix(Matrix3x3D m)
     {
         double trace = m.M11 + m.M22 + m.M33;
         if (trace > 0)
@@ -112,7 +118,7 @@ public readonly struct QuaternionD : IEquatable<QuaternionD>
     }
 
     /// <summary>The conjugate (-X, -Y, -Z, W); for a unit quaternion this is the inverse rotation.</summary>
-    public QuaternionD Conjugate() => new(-X, -Y, -Z, W);
+    public QuaternionD Conjugated() => new(-X, -Y, -Z, W);
 
     /// <summary>
     /// The multiplicative inverse, the conjugate divided by <see cref="LengthSquared"/> (each component a true division).
@@ -184,4 +190,49 @@ public readonly struct QuaternionD : IEquatable<QuaternionD>
 
     /// <inheritdoc />
     public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"({X:R}, {Y:R}, {Z:R}, {W:R})");
+
+    /// <summary>
+    /// Builds the rotation of <paramref name="radians"/> about <paramref name="axis"/> (which must be a unit vector; counter-clockwise
+    /// seen from the tip of the axis). Defined exactly as <c>CreateFromAxisSinCos(axis, Math64.SinCos(radians / 2))</c>: the half-angle
+    /// sine and cosine come from this library's correctly rounded functions, so the bits are the same everywhere. Not renormalized.
+    /// </summary>
+    public static QuaternionD CreateFromAxisAngle(Vector3D axis, double radians)
+    {
+        (double sin, double cos) = Math64.SinCos(radians / 2);
+        return CreateFromAxisSinCos(axis, sin, cos);
+    }
+
+    /// <summary>
+    /// Spherical linear interpolation along the shortest arc between unit quaternions. Evaluation order: <c>d = Dot(a, b)</c>; when
+    /// <c>d</c> is negative <paramref name="b"/> is negated and <c>d</c> becomes <c>-d</c> (exactly zero keeps <paramref name="b"/>).
+    /// When <c>d</c> is above 0.9995 the quaternions are nearly parallel and the result is <c>Lerp(a, b, t).Normalized()</c>.
+    /// Otherwise <c>theta = Math64.Acos(d)</c>, <c>s = Math64.Sin(theta)</c>, <c>wa = Math64.Sin((1 - t) * theta) / s</c>,
+    /// <c>wb = Math64.Sin(t * theta) / s</c> and each component is <c>a.c * wa + b.c * wb</c> (product, product, then one sum).
+    /// Inputs are assumed to be unit length; the result is not renormalized on the spherical branch. <paramref name="t"/> is not clamped.
+    /// </summary>
+    public static QuaternionD Slerp(QuaternionD a, QuaternionD b, double t)
+    {
+        double d = Dot(a, b);
+        QuaternionD bb = b;
+        if (d < 0)
+        {
+            bb = new(-b.X, -b.Y, -b.Z, -b.W);
+            d = -d;
+        }
+        if (d > 0.9995)
+        {
+            return Lerp(a, bb, t).Normalized();
+        }
+        double theta = Math64.Acos(d);
+        double sinTheta = Math64.Sin(theta);
+        double wa = Math64.Sin((1 - t) * theta) / sinTheta;
+        double wb = Math64.Sin(t * theta) / sinTheta;
+        return new(a.X * wa + bb.X * wb, a.Y * wa + bb.Y * wb, a.Z * wa + bb.Z * wb, a.W * wa + bb.W * wb);
+    }
+
+    /// <summary>Converts from a <see cref="System.Numerics.Quaternion"/> (same component meaning and Hamilton product; no transposition needed). Exact.</summary>
+    public static QuaternionD FromSystemNumerics(System.Numerics.Quaternion q) => new(q.X, q.Y, q.Z, q.W);
+
+    /// <summary>Converts to a <see cref="System.Numerics.Quaternion"/>. Narrows each component to float32 (round to nearest even).</summary>
+    public System.Numerics.Quaternion ToSystemNumerics() => new((float)X, (float)Y, (float)Z, (float)W);
 }

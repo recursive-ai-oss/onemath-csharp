@@ -27,8 +27,11 @@ public static class FixedBridge
     /// <summary>The largest raw magnitude accepted, 2^53 - 1.</summary>
     public const long MaxRaw = (1L << 53) - 1;
 
-    /// <summary>The exclusive bound on the magnitude of a converted value, 2^21 = 2,097,152.</summary>
-    public const double MaxMagnitude = 2097152.0;
+    /// <summary>
+    /// The exclusive bound on the magnitude of a converted value, 2^21 = 2,097,152: a value is accepted when its magnitude is
+    /// strictly below this number. A property rather than a constant so the bound is not compiled into callers.
+    /// </summary>
+    public static double ExclusiveMagnitudeBound => 2097152.0;
 
     // 2^32 and 2^-32: powers of two, so scaling by them is exact (no overflow or underflow in range).
     private const double Scale = 4294967296.0;
@@ -38,7 +41,7 @@ public static class FixedBridge
     public static bool IsInRange(long raw) => raw >= -MaxRaw && raw <= MaxRaw;
 
     /// <summary>True when <paramref name="value"/> is finite and |value| &lt; 2^21.</summary>
-    public static bool IsInRange(double value) => value > -MaxMagnitude && value < MaxMagnitude;
+    public static bool IsInRange(double value) => value > -ExclusiveMagnitudeBound && value < ExclusiveMagnitudeBound;
 
     /// <summary>Converts a raw value to double, exactly. Throws <see cref="ArgumentOutOfRangeException"/> if |raw| &gt; <see cref="MaxRaw"/>.</summary>
     public static double ToDouble(long raw)

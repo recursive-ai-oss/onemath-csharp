@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath.Physics;
 
@@ -10,6 +11,7 @@ namespace RecursiveAI.OneMath.Physics;
 public readonly struct EigenDecompositionD : IEquatable<EigenDecompositionD>
 {
     /// <summary>Creates a result from its parts.</summary>
+    [JsonConstructor]
     public EigenDecompositionD(Vector3D values, Matrix3x3D vectors)
     {
         Values = values;

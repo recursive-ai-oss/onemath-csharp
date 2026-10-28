@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath.Physics;
 
@@ -9,9 +10,18 @@ namespace RecursiveAI.OneMath.Physics;
 /// </summary>
 public readonly struct MassPropertiesF : IEquatable<MassPropertiesF>
 {
-    /// <summary>Creates mass properties. No validation happens here; <see cref="InertiaF.Combine"/> validates what it is given.</summary>
+    /// <summary>
+    /// Creates mass properties. The mass must not be negative; nothing else is checked here (<see cref="InertiaF.Combine"/> validates
+    /// finiteness and symmetry of what it is given).
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="mass"/> is negative.</exception>
+    [JsonConstructor]
     public MassPropertiesF(float mass, Vector3F center, Matrix3x3F inertia)
     {
+        if (mass < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(mass), mass, "The mass is negative; a mass of zero or more is expected.");
+        }
         Mass = mass;
         Center = center;
         Inertia = inertia;
@@ -45,12 +55,16 @@ public readonly struct MassPropertiesF : IEquatable<MassPropertiesF>
 /// <summary>An inertia tensor in its principal frame: moments about the principal axes and the rotation to that frame.</summary>
 public readonly struct PrincipalAxesF : IEquatable<PrincipalAxesF>
 {
-    /// <summary>Creates a result from its parts.</summary>
-    public PrincipalAxesF(Vector3F moments, Matrix3x3F rotation, QuaternionF orientation)
+    /// <summary>
+    /// Creates a result from the principal moments and the rotation to the principal frame. <see cref="Orientation"/> is derived
+    /// from <paramref name="rotation"/> with <see cref="QuaternionF.CreateFromRotationMatrix"/>, so the two can never disagree.
+    /// </summary>
+    [JsonConstructor]
+    public PrincipalAxesF(Vector3F moments, Matrix3x3F rotation)
     {
         Moments = moments;
         Rotation = rotation;
-        Orientation = orientation;
+        Orientation = QuaternionF.CreateFromRotationMatrix(rotation);
     }
 
     /// <summary>The principal moments, ascending.</summary>
@@ -59,7 +73,8 @@ public readonly struct PrincipalAxesF : IEquatable<PrincipalAxesF>
     /// <summary>The principal axes as columns (right-handed): <c>I = Rotation * diag(Moments) * Rotation^T</c>.</summary>
     public Matrix3x3F Rotation { get; }
 
-    /// <summary>The same rotation as a quaternion (<c>Quaternion.FromMatrix(Rotation)</c>).</summary>
+    /// <summary>The same rotation as a quaternion (<c>CreateFromRotationMatrix(Rotation)</c>).</summary>
+    [JsonIgnore]
     public QuaternionF Orientation { get; }
 
     /// <summary>Equality of all three parts.</summary>
@@ -205,8 +220,10 @@ public static class InertiaF
     /// <exception cref="ArgumentException"><paramref name="tensor"/> is not symmetric.</exception>
     public static PrincipalAxesF PrincipalAxes(Matrix3x3F tensor)
     {
+        // Validate here so a bad tensor is reported under this method's parameter name.
+        GuardsF.Symmetric(tensor, nameof(tensor), nameof(tensor));
         EigenDecompositionF e = SymmetricEigenF.Decompose(tensor);
-        return new PrincipalAxesF(e.Values, e.Vectors, QuaternionF.FromMatrix(e.Vectors));
+        return new PrincipalAxesF(e.Values, e.Vectors);
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath;
 
@@ -9,59 +10,88 @@ namespace RecursiveAI.OneMath;
 /// A 4x4 matrix of <see cref="double"/>, stored row-major in fields named <c>Mrc</c> (row r, column c).
 /// Vectors are columns: <c>Transform(v)</c> computes M * v; translation sits in column 4.
 /// Products accumulate left to right.
+/// <para>
+/// <b>Matrix convention (the opposite of System.Numerics).</b> Vectors are columns, with the translation in column 4 (<c>M14</c>, <c>M24</c>, <c>M34</c>) and <c>a * b</c> applies <c>b</c> first.
+/// System.Numerics uses row vectors with the translation in <c>M41</c>..<c>M43</c> and <c>a * b</c> applies <c>a</c> first, although its field names <c>Mrc</c> are the same as
+/// these. A matrix copied field by field from System.Numerics is therefore the transpose of the transform it was; use
+/// <see cref="Matrix4x4D.FromSystemNumerics"/>, which transposes.
+/// </para>
+/// <para>
+/// Worked example: System.Numerics <c>T * R</c> (translate, then rotate) is <c>R * T</c> here. With <c>T</c> = translation by (10, 0, 0) and
+/// <c>R</c> = rotation by 90 degrees about Y, both give the origin the position (0, 0, -10) up to rounding: this library as
+/// <c>Matrix4x4D.CreateRotationY(Math.PI / 2) * Matrix4x4D.CreateTranslation(new Vector3D(10, 0, 0))</c>, System.Numerics as
+/// <c>Matrix4x4.CreateTranslation(10, 0, 0) * Matrix4x4.CreateRotationY((float)(Math.PI / 2))</c>.
+/// </para>
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public readonly struct Matrix4x4D : IEquatable<Matrix4x4D>
 {
     /// <summary>Row 1, column 1.</summary>
+    [JsonInclude]
     public readonly double M11;
 
     /// <summary>Row 1, column 2.</summary>
+    [JsonInclude]
     public readonly double M12;
 
     /// <summary>Row 1, column 3.</summary>
+    [JsonInclude]
     public readonly double M13;
 
     /// <summary>Row 1, column 4.</summary>
+    [JsonInclude]
     public readonly double M14;
 
     /// <summary>Row 2, column 1.</summary>
+    [JsonInclude]
     public readonly double M21;
 
     /// <summary>Row 2, column 2.</summary>
+    [JsonInclude]
     public readonly double M22;
 
     /// <summary>Row 2, column 3.</summary>
+    [JsonInclude]
     public readonly double M23;
 
     /// <summary>Row 2, column 4.</summary>
+    [JsonInclude]
     public readonly double M24;
 
     /// <summary>Row 3, column 1.</summary>
+    [JsonInclude]
     public readonly double M31;
 
     /// <summary>Row 3, column 2.</summary>
+    [JsonInclude]
     public readonly double M32;
 
     /// <summary>Row 3, column 3.</summary>
+    [JsonInclude]
     public readonly double M33;
 
     /// <summary>Row 3, column 4.</summary>
+    [JsonInclude]
     public readonly double M34;
 
     /// <summary>Row 4, column 1.</summary>
+    [JsonInclude]
     public readonly double M41;
 
     /// <summary>Row 4, column 2.</summary>
+    [JsonInclude]
     public readonly double M42;
 
     /// <summary>Row 4, column 3.</summary>
+    [JsonInclude]
     public readonly double M43;
 
     /// <summary>Row 4, column 4.</summary>
+    [JsonInclude]
     public readonly double M44;
 
     /// <summary>Creates a matrix from its entries in row-major order.</summary>
+    [JsonConstructor]
     public Matrix4x4D(
         double m11, double m12, double m13, double m14,
         double m21, double m22, double m23, double m24,
@@ -90,12 +120,12 @@ public readonly struct Matrix4x4D : IEquatable<Matrix4x4D>
     public static Matrix4x4D Identity => new(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
     /// <summary>Creates a matrix whose columns are the given vectors.</summary>
-    public static Matrix4x4D FromColumns(Vector4D c1, Vector4D c2, Vector4D c3, Vector4D c4) =>
-        new(c1.X, c2.X, c3.X, c4.X, c1.Y, c2.Y, c3.Y, c4.Y, c1.Z, c2.Z, c3.Z, c4.Z, c1.W, c2.W, c3.W, c4.W);
+    public static Matrix4x4D FromColumns(Vector4D column0, Vector4D column1, Vector4D column2, Vector4D column3) =>
+        new(column0.X, column1.X, column2.X, column3.X, column0.Y, column1.Y, column2.Y, column3.Y, column0.Z, column1.Z, column2.Z, column3.Z, column0.W, column1.W, column2.W, column3.W);
 
     /// <summary>Creates a matrix whose rows are the given vectors.</summary>
-    public static Matrix4x4D FromRows(Vector4D r1, Vector4D r2, Vector4D r3, Vector4D r4) =>
-        new(r1.X, r1.Y, r1.Z, r1.W, r2.X, r2.Y, r2.Z, r2.W, r3.X, r3.Y, r3.Z, r3.W, r4.X, r4.Y, r4.Z, r4.W);
+    public static Matrix4x4D FromRows(Vector4D row0, Vector4D row1, Vector4D row2, Vector4D row3) =>
+        new(row0.X, row0.Y, row0.Z, row0.W, row1.X, row1.Y, row1.Z, row1.W, row2.X, row2.Y, row2.Z, row2.W, row3.X, row3.Y, row3.Z, row3.W);
 
     /// <summary>Creates a translation matrix (the offset goes in column 4).</summary>
     public static Matrix4x4D CreateTranslation(Vector3D offset) =>
@@ -179,7 +209,7 @@ public readonly struct Matrix4x4D : IEquatable<Matrix4x4D>
         M31 * v.X + M32 * v.Y + M33 * v.Z);
 
     /// <summary>The transposed matrix.</summary>
-    public Matrix4x4D Transpose() => new(M11, M21, M31, M41, M12, M22, M32, M42, M13, M23, M33, M43, M14, M24, M34, M44);
+    public Matrix4x4D Transposed() => new(M11, M21, M31, M41, M12, M22, M32, M42, M13, M23, M33, M43, M14, M24, M34, M44);
 
     /// <summary>
     /// Determinant by Laplace expansion over the six 2x2 minors of rows 1-2 (s0..s5) and rows 3-4 (c0..c5):
@@ -269,4 +299,47 @@ public readonly struct Matrix4x4D : IEquatable<Matrix4x4D>
     public override string ToString() => string.Create(
         CultureInfo.InvariantCulture,
         $"[{M11:R}, {M12:R}, {M13:R}, {M14:R}; {M21:R}, {M22:R}, {M23:R}, {M24:R}; {M31:R}, {M32:R}, {M33:R}, {M34:R}; {M41:R}, {M42:R}, {M43:R}, {M44:R}]");
+
+    /// <summary>Rotation of <paramref name="radians"/> about the X axis (column vectors, right-handed): the 3x3 block of <see cref="Matrix3x3D.CreateRotationX"/>, translation zero.</summary>
+    public static Matrix4x4D CreateRotationX(double radians) => CreateFromMatrix3x3(Matrix3x3D.CreateRotationX(radians));
+
+    /// <summary>Rotation of <paramref name="radians"/> about the Y axis (column vectors, right-handed): the 3x3 block of <see cref="Matrix3x3D.CreateRotationY"/>, translation zero.</summary>
+    public static Matrix4x4D CreateRotationY(double radians) => CreateFromMatrix3x3(Matrix3x3D.CreateRotationY(radians));
+
+    /// <summary>Rotation of <paramref name="radians"/> about the Z axis (column vectors, right-handed): the 3x3 block of <see cref="Matrix3x3D.CreateRotationZ"/>, translation zero.</summary>
+    public static Matrix4x4D CreateRotationZ(double radians) => CreateFromMatrix3x3(Matrix3x3D.CreateRotationZ(radians));
+
+    /// <summary>The 4x4 rotation matrix of a unit quaternion: <see cref="QuaternionD.ToMatrix"/> in the 3x3 block, translation zero.</summary>
+    public static Matrix4x4D CreateFromQuaternion(QuaternionD rotation) => CreateFromMatrix3x3(rotation.ToMatrix());
+
+    /// <summary>Embeds a 3x3 matrix in the upper-left block; the translation is zero and the bottom row is <c>(0, 0, 0, 1)</c>.</summary>
+    public static Matrix4x4D CreateFromMatrix3x3(Matrix3x3D linear) => new(
+        linear.M11, linear.M12, linear.M13, 0,
+        linear.M21, linear.M22, linear.M23, 0,
+        linear.M31, linear.M32, linear.M33, 0,
+        0, 0, 0, 1);
+
+    /// <summary>The 4x4 matrix of an affine transform; the same as <see cref="Affine3D.ToMatrix"/>.</summary>
+    public static Matrix4x4D CreateFromAffine(Affine3D affine) => affine.ToMatrix();
+
+    /// <summary>
+    /// Converts from a <see cref="System.Numerics.Matrix4x4"/>, which uses row vectors: its translation is in <c>M41..M43</c> and
+    /// <c>a * b</c> applies <c>a</c> first. The result is the transpose, so it is the same transform in this type's column-vector
+    /// convention (translation in <c>M14..M34</c>, <c>a * b</c> applies <c>b</c> first). Entries are copied exactly.
+    /// </summary>
+    public static Matrix4x4D FromSystemNumerics(System.Numerics.Matrix4x4 m) => new(
+        m.M11, m.M21, m.M31, m.M41,
+        m.M12, m.M22, m.M32, m.M42,
+        m.M13, m.M23, m.M33, m.M43,
+        m.M14, m.M24, m.M34, m.M44);
+
+    /// <summary>
+    /// Converts to a <see cref="System.Numerics.Matrix4x4"/> (row vectors): the transpose of this matrix, so the same transform
+    /// in System.Numerics' convention. Entries are narrowed to float32 (round to nearest even).
+    /// </summary>
+    public System.Numerics.Matrix4x4 ToSystemNumerics() => new(
+        (float)M11, (float)M21, (float)M31, (float)M41,
+        (float)M12, (float)M22, (float)M32, (float)M42,
+        (float)M13, (float)M23, (float)M33, (float)M43,
+        (float)M14, (float)M24, (float)M34, (float)M44);
 }

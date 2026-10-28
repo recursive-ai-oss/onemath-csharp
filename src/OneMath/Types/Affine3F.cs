@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath;
 
@@ -13,12 +14,15 @@ namespace RecursiveAI.OneMath;
 public readonly struct Affine3F : IEquatable<Affine3F>
 {
     /// <summary>The linear (rotation, scale, shear) part.</summary>
+    [JsonInclude]
     public readonly Matrix3x3F Linear;
 
     /// <summary>The translation applied after the linear part.</summary>
+    [JsonInclude]
     public readonly Vector3F Translation;
 
     /// <summary>Creates a transform from its parts.</summary>
+    [JsonConstructor]
     public Affine3F(Matrix3x3F linear, Vector3F translation)
     {
         Linear = linear;
@@ -29,7 +33,25 @@ public readonly struct Affine3F : IEquatable<Affine3F>
     public static Affine3F Identity => new(Matrix3x3F.Identity, default);
 
     /// <summary>A pure translation.</summary>
-    public static Affine3F FromTranslation(Vector3F offset) => new(Matrix3x3F.Identity, offset);
+    public static Affine3F CreateTranslation(Vector3F offset) => new(Matrix3x3F.Identity, offset);
+
+    /// <summary>Creates a scaling transform (the diagonal of <see cref="Matrix3x3F.CreateScale"/>, translation zero).</summary>
+    public static Affine3F CreateScale(Vector3F scale) => new(Matrix3x3F.CreateScale(scale), default);
+
+    /// <summary>Creates a transform with the given linear part and zero translation.</summary>
+    public static Affine3F CreateFromLinear(Matrix3x3F linear) => new(linear, default);
+
+    /// <summary>Creates the rotation of a unit quaternion (<see cref="QuaternionF.ToMatrix"/>), translation zero.</summary>
+    public static Affine3F CreateFromQuaternion(QuaternionF rotation) => new(rotation.ToMatrix(), default);
+
+    /// <summary>Rotation about the X axis, translation zero; see <see cref="Matrix3x3F.CreateRotationX"/>.</summary>
+    public static Affine3F CreateRotationX(float radians) => new(Matrix3x3F.CreateRotationX(radians), default);
+
+    /// <summary>Rotation about the Y axis, translation zero; see <see cref="Matrix3x3F.CreateRotationY"/>.</summary>
+    public static Affine3F CreateRotationY(float radians) => new(Matrix3x3F.CreateRotationY(radians), default);
+
+    /// <summary>Rotation about the Z axis, translation zero; see <see cref="Matrix3x3F.CreateRotationZ"/>.</summary>
+    public static Affine3F CreateRotationZ(float radians) => new(Matrix3x3F.CreateRotationZ(radians), default);
 
     /// <summary>Transforms a point: <c>Linear.Transform(p) + Translation</c>.</summary>
     public Vector3F TransformPoint(Vector3F p) => Linear.Transform(p) + Translation;

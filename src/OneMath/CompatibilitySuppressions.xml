@@ -1,9 +1,225 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- ExpansionArithmetic became internal in 1.0.0: its preconditions are unchecked, so it is not public API. -->
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <!-- ExpansionArithmetic became internal: its preconditions are unchecked. -->
   <Suppression>
     <DiagnosticId>CP0001</DiagnosticId>
     <Target>T:RecursiveAI.OneMath.Predicates.ExpansionArithmetic</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed ExclusiveMagnitudeBound and made a property: the bound is exclusive and must not be compiled into callers. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>F:RecursiveAI.OneMath.FixedBridge.MaxMagnitude</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateTranslation: one factory verb (Create...) for everything built from parts. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Affine3D.FromTranslation(RecursiveAI.OneMath.Vector3D)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateTranslation: one factory verb (Create...) for everything built from parts. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Affine3F.FromTranslation(RecursiveAI.OneMath.Vector3F)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromCenterExtents: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Bounds2D.FromCenterExtents(RecursiveAI.OneMath.Vector2D,RecursiveAI.OneMath.Vector2D)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromPoints: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Bounds2D.FromPoints(System.ReadOnlySpan{RecursiveAI.OneMath.Vector2D})</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromCenterExtents: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Bounds2F.FromCenterExtents(RecursiveAI.OneMath.Vector2F,RecursiveAI.OneMath.Vector2F)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromPoints: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Bounds2F.FromPoints(System.ReadOnlySpan{RecursiveAI.OneMath.Vector2F})</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromCenterExtents: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Bounds3D.FromCenterExtents(RecursiveAI.OneMath.Vector3D,RecursiveAI.OneMath.Vector3D)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromPoints: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Bounds3D.FromPoints(System.ReadOnlySpan{RecursiveAI.OneMath.Vector3D})</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromCenterExtents: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Bounds3F.FromCenterExtents(RecursiveAI.OneMath.Vector3F,RecursiveAI.OneMath.Vector3F)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromPoints: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Bounds3F.FromPoints(System.ReadOnlySpan{RecursiveAI.OneMath.Vector3F})</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Transposed: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Matrix2x2D.Transpose</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Transposed: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Matrix2x2F.Transpose</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Transposed: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Matrix3x3D.Transpose</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Transposed: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Matrix3x3F.Transpose</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Transposed: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Matrix4x4D.Transpose</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Transposed: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Matrix4x4F.Transpose</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Orientation is now derived from Rotation, so the constructor no longer takes it and the two can never disagree. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Physics.PrincipalAxesD.#ctor(RecursiveAI.OneMath.Vector3D,RecursiveAI.OneMath.Matrix3x3D,RecursiveAI.OneMath.QuaternionD)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Orientation is now derived from Rotation, so the constructor no longer takes it and the two can never disagree. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.Physics.PrincipalAxesF.#ctor(RecursiveAI.OneMath.Vector3F,RecursiveAI.OneMath.Matrix3x3F,RecursiveAI.OneMath.QuaternionF)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Conjugated: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.QuaternionD.Conjugate</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromAxisSinCos: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.QuaternionD.FromAxisSinCos(RecursiveAI.OneMath.Vector3D,System.Double,System.Double)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromRotationMatrix, the System.Numerics name. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.QuaternionD.FromMatrix(RecursiveAI.OneMath.Matrix3x3D)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Conjugated: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.QuaternionF.Conjugate</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromAxisSinCos: one factory verb. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.QuaternionF.FromAxisSinCos(RecursiveAI.OneMath.Vector3F,System.Single,System.Single)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed CreateFromRotationMatrix, the System.Numerics name. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.QuaternionF.FromMatrix(RecursiveAI.OneMath.Matrix3x3F)</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Inverted: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.RigidTransformD.Inverse</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <!-- Renamed Inverted: instance transforms that return a new value use participles. -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:RecursiveAI.OneMath.RigidTransformF.Inverse</Target>
     <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
     <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>

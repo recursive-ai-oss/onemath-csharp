@@ -86,15 +86,15 @@ internal static class TypesFScenarios
         for (int i = 0; i < Count; i++)
         {
             Matrix2x2F a2 = M2(r), b2 = M2(r);
-            W(c, a2 * b2); W(c, a2.Transpose()); c.Write(a2.Determinant()); W(c, a2.Transform(V2(r)));
+            W(c, a2 * b2); W(c, a2.Transposed()); c.Write(a2.Determinant()); W(c, a2.Transform(V2(r)));
             c.Write(a2.TryInvert(out Matrix2x2F i2) ? 1 : 0); W(c, i2);
 
             Matrix3x3F a3 = M3(r), b3 = M3(r);
-            W(c, a3 * b3); W(c, a3.Transpose()); c.Write(a3.Determinant()); W(c, a3.Transform(V3(r)));
+            W(c, a3 * b3); W(c, a3.Transposed()); c.Write(a3.Determinant()); W(c, a3.Transform(V3(r)));
             c.Write(a3.TryInvert(out Matrix3x3F i3) ? 1 : 0); W(c, i3);
 
             Matrix4x4F a4 = M4(r), b4 = M4(r);
-            W(c, a4 * b4); W(c, a4.Transpose()); c.Write(a4.Determinant()); W(c, a4.Transform(V4(r)));
+            W(c, a4 * b4); W(c, a4.Transposed()); c.Write(a4.Determinant()); W(c, a4.Transform(V4(r)));
             W(c, a4.TransformPoint(V3(r))); W(c, a4.TransformVector(V3(r)));
             c.Write(a4.TryInvert(out Matrix4x4F i4) ? 1 : 0); W(c, i4);
         }
@@ -106,12 +106,12 @@ internal static class TypesFScenarios
         for (int i = 0; i < Count; i++)
         {
             QuaternionF a = Q(r).Normalized(), b = Q(r).Normalized();
-            W(c, a * b); W(c, a.Conjugate()); W(c, a.Normalized()); c.Write(QuaternionF.Dot(a, b)); c.Write(a.Length());
+            W(c, a * b); W(c, a.Conjugated()); W(c, a.Normalized()); c.Write(QuaternionF.Dot(a, b)); c.Write(a.Length());
             W(c, QuaternionF.NLerp(a, b, R(r))); W(c, QuaternionF.Lerp(a, b, R(r)));
             c.Write(Q(r).TryInvert(out QuaternionF inv) ? 1 : 0); W(c, inv);
             W(c, a.Rotate(V3(r)));
             Matrix3x3F m = a.ToMatrix();
-            W(c, m); W(c, QuaternionF.FromMatrix(m));
+            W(c, m); W(c, QuaternionF.CreateFromRotationMatrix(m));
         }
     }
 
@@ -123,7 +123,7 @@ internal static class TypesFScenarios
             var ra = new RigidTransformF(Q(r).Normalized(), V3(r));
             var rb = new RigidTransformF(Q(r).Normalized(), V3(r));
             RigidTransformF rc = ra * rb;
-            W(c, rc.Rotation); W(c, rc.Translation); W(c, ra.Inverse().Rotation); W(c, ra.Inverse().Translation);
+            W(c, rc.Rotation); W(c, rc.Translation); W(c, ra.Inverted().Rotation); W(c, ra.Inverted().Translation);
             W(c, ra.TransformPoint(V3(r))); W(c, ra.TransformVector(V3(r))); W(c, ra.ToMatrix());
 
             var aa = new Affine3F(M3(r), V3(r));
@@ -144,7 +144,7 @@ internal static class TypesFScenarios
             {
                 pts[k] = V3(r);
             }
-            Bounds3F a = Bounds3F.FromPoints(pts.AsSpan(0, 8)), b = Bounds3F.FromPoints(pts.AsSpan(8, 8));
+            Bounds3F a = Bounds3F.CreateFromPoints(pts.AsSpan(0, 8)), b = Bounds3F.CreateFromPoints(pts.AsSpan(8, 8));
             W(c, a); W(c, Bounds3F.Union(a, b)); W(c, Bounds3F.Intersection(a, b)); W(c, a.Center); W(c, a.Extents);
             c.Write(a.Volume()); c.Write(a.SurfaceArea());
             c.Write(a.Intersects(b) ? 1 : 0); c.Write(a.Contains(b) ? 1 : 0); c.Write(a.Contains(pts[3]) ? 1 : 0);

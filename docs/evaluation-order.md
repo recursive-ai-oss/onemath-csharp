@@ -21,7 +21,9 @@ Normative: a port must evaluate in this order to produce the same bits.
 
 ## Matrices
 
-Row-major fields `Mrc`; column-vector convention (`M * v`).
+Row-major fields `Mrc`; column-vector convention (`M * v`). Translation sits in column 4 (`M14`, `M24`, `M34`) and `a * b` applies `b` first. This is the transpose of System.Numerics' row-vector convention, which keeps the same field names; `FromSystemNumerics` / `ToSystemNumerics` on `Matrix4x4` transpose. The product of System.Numerics matrices `T * R` (translate, then rotate) corresponds to `R * T` here.
+
+- `CreateRotationX/Y/Z(radians)` with `(s, c) = SinCos(radians)`: X is rows `(1,0,0) (0,c,-s) (0,s,c)`, Y is `(c,0,s) (0,1,0) (-s,0,c)`, Z is `(c,-s,0) (s,c,0) (0,0,1)`. The 4x4 forms embed these with zero translation (`CreateFromMatrix3x3`: entries copied, `0 0 0 1` bottom row). `CreateFromQuaternion(q)` is `q.ToMatrix()`.
 
 - Product entry (r, c) = `((a.Mr1*b.M1c + a.Mr2*b.M2c) + a.Mr3*b.M3c) + a.Mr4*b.M4c`; matrix-vector likewise.
 - 2x2 determinant `M11*M22 - M12*M21`; inverse entries `M22/det, -M12/det, -M21/det, M11/det`.
@@ -34,12 +36,19 @@ Row-major fields `Mrc`; column-vector convention (`M * v`).
 - Hamilton product `a * b`: `X = ((a.W*b.X + a.X*b.W) + a.Y*b.Z) - a.Z*b.Y`, `Y = ((a.W*b.Y - a.X*b.Z) + a.Y*b.W) + a.Z*b.X`, `Z = ((a.W*b.Z + a.X*b.Y) - a.Y*b.X) + a.Z*b.W`, `W = ((a.W*b.W - a.X*b.X) - a.Y*b.Y) - a.Z*b.Z`.
 - `Rotate(v)`: `t = 2 * cross(q.xyz, v)`, result `(v + t*W) + cross(q.xyz, t)`.
 - `ToMatrix`: `xx = X*X` etc., diagonal `1 - 2*(yy + zz)`, `1 - 2*(xx + zz)`, `1 - 2*(xx + yy)`, off-diagonals `2*(xy - wz)`, `2*(xz + wy)`, `2*(xy + wz)`, `2*(yz - wx)`, `2*(xz - wy)`, `2*(yz + wx)`.
-- `FromMatrix`: trace method; branch order trace > 0, then `M11 > M22 && M11 > M33`, then `M22 > M33`, else M33.
+- `CreateFromRotationMatrix`: trace method; branch order trace > 0, then `M11 > M22 && M11 > M33`, then `M22 > M33`, else M33.
 - `NLerp`: negate `b` when `Dot(a, b) < 0`; then component-wise `Lerp`; then `Normalized` (identity for a zero result).
-- Angle constructors are not provided. Build the half-angle sine and cosine with this library's functions and use `FromAxisSinCos(axis, sinHalf, cosHalf)`, which only multiplies.
+- `CreateFromAxisSinCos(axis, sinHalf, cosHalf)` only multiplies: `(axis.X*sinHalf, axis.Y*sinHalf, axis.Z*sinHalf, cosHalf)`. `CreateFromAxisAngle(axis, radians)` is exactly `CreateFromAxisSinCos(axis, SinCos(radians / 2))` with the library's own `SinCos` (`Math64` for double, `Math32` for float).
+- `Slerp(a, b, t)`: `d = Dot(a, b)`; if `d < 0` negate `b` and `d`; if `d > 0.9995` return `Lerp(a, b, t).Normalized()`; otherwise `theta = Acos(d)`, `s = Sin(theta)`, `wa = Sin((1 - t) * theta) / s`, `wb = Sin(t * theta) / s`, and each component is `a.c * wa + b.c * wb` (two products, one sum; not renormalized).
 
 ## Transforms and bounds
 
 - `Affine3`: `TransformPoint(p) = Linear*p + Translation`; composition `a*b` has linear part `a.Linear*b.Linear` and translation `a.Linear*b.Translation + a.Translation`; the inverse is `(L^-1, -(L^-1 * t))`.
 - `RigidTransform`: same shape with the quaternion in place of the matrix; `Inverse` uses the conjugate.
 - Bounds: `Center = Min + (Max - Min) * 0.5`; `Volume = (sx*sy)*sz`; `SurfaceArea = 2 * ((sx*sy + sy*sz) + sz*sx)`; empty boxes have `Min = +inf, Max = -inf`.
+
+## Naming and conversions
+
+- Factories that build a value from parts or another concept are `Create...` (`CreateTranslation`, `CreateScale`, `CreateRotationX`, `CreateFromQuaternion`, `CreateFromRotationMatrix`, `CreateFromPoints`). `From...` is only for pure representation changes (`FromRows`, `FromColumns`, `FromSystemNumerics`). Instance methods that return a new value use participles (`Normalized`, `Transposed`, `Inverted`, `Conjugated`); `TryInvert(out)` is the fallible form. Row and column parameters of `FromRows` / `FromColumns` are 0-based (`row0`, `column0`, ...) like `Row(int)` and `Column(int)`.
+- `FromSystemNumerics` / `ToSystemNumerics` exist for vectors, quaternions (same components, same Hamilton product) and 4x4 matrices (transposed). Float to float is a plain copy; double to float rounds to nearest even and is only available as the explicit method `ToSystemNumerics()`.
+- JSON (`System.Text.Json`): every public value type serializes its public fields (or properties for the physics result types) by name and reads them back through its component constructor, bit for bit with default options and with source-generated metadata. Derived members (`QuaternionD.Vector`, `Vector4D.XYZ`, `Bounds.IsEmpty`/`Size`/`Extents`/`Center`, `PrincipalAxes.Orientation`) are not written. JSON has no NaN or infinity: such a value (for example `Bounds.Empty`) cannot be written with default options.

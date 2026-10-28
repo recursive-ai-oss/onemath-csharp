@@ -12,7 +12,7 @@
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/recursive-ai-oss/onemath-csharp</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://recursiveai.org/onemath/</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/recursive-ai-oss/onemath-csharp</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup>

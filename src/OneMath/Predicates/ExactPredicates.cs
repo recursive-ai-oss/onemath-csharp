@@ -13,14 +13,14 @@ namespace RecursiveAI.OneMath.Predicates;
 /// every platform: only IEEE-exact <c>+ - *</c> are used, with no fused multiply-add.
 /// </para>
 /// <para>
-/// <b>Input requirements.</b> All coordinates must be finite; NaN or infinity throws
-/// <see cref="ArgumentOutOfRangeException"/>. Exactness is guaranteed for coordinates that are zero or
-/// have magnitude in [2^-140, 2^200] (about 7e-43 .. 1.6e60); a nonzero coordinate outside that range
-/// throws <see cref="ArgumentOutOfRangeException"/> whenever the exact path is needed. (A call the
-/// floating-point filter can decide with a comfortable margin may succeed outside the range, and its
-/// sign is still correct.) The bounds keep every product of up to five coordinates inside double's
-/// normal range, so no product overflows or loses error bits. Real-world data (world coordinates within
-/// ±2^21 at a resolution of 2^-32) lies well inside.
+/// <b>Input range.</b> Every coordinate must be finite and either zero or of magnitude in [2^-140, 2^200]
+/// (about 7e-43 .. 1.6e60). <b>Out-of-range input may throw</b> <see cref="ArgumentOutOfRangeException"/> (its
+/// <see cref="ArgumentException.ParamName"/> is the coordinate parameter, such as <c>cx</c>): a call the floating-point
+/// filter decides with a comfortable margin returns its (correct) sign even for out-of-range finite values, and a call
+/// that needs the exact path throws. Do not rely on either outcome; keep inputs inside the range. NaN and infinity
+/// throw. The bounds keep every
+/// product of up to five coordinates inside double's normal range, so no product overflows or loses error bits.
+/// Real-world data (world coordinates within ±2^21 at a resolution of 2^-32) lies well inside.
 /// </para>
 /// <para>
 /// The methods never allocate on the filtered path. The exact path uses a per-thread scratch area.
@@ -61,7 +61,7 @@ public static class ExactPredicates
     /// line a→b, in a y-up coordinate system), -1 if clockwise, 0 if collinear. Exactly the sign of
     /// (ax-cx)(by-cy) - (ay-cy)(bx-cx).
     /// </summary>
-    /// <exception cref="ArgumentOutOfRangeException">A coordinate is NaN, infinite, or outside the supported range (see the class remarks).</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A coordinate is NaN, infinite, or outside the supported range (see the class remarks; out-of-range input may throw).</exception>
     public static int Orient2D(double ax, double ay, double bx, double by, double cx, double cy)
     {
         double detleft = (ax - cx) * (by - cy);
@@ -81,7 +81,7 @@ public static class ExactPredicates
 
     private static int Orient2DExact(double ax, double ay, double bx, double by, double cx, double cy)
     {
-        CheckRange(ax, ay, bx, by, cx, cy);
+        Check(ax, nameof(ax)); Check(ay, nameof(ay)); Check(bx, nameof(bx)); Check(by, nameof(by)); Check(cx, nameof(cx)); Check(cy, nameof(cy));
         Arena ar = Arena.Get();
         int mark = ar.Mark;
         try
@@ -101,7 +101,8 @@ public static class ExactPredicates
     /// <summary>
     /// Orientation of the tetrahedron (a, b, c, d): +1 if d lies below the plane through a, b, c (the side from
     /// which a, b, c appear clockwise; equivalently a, b, c seen from above run counter-clockwise), -1 if above,
-    /// 0 if coplanar. Exactly the sign of the determinant of the rows a-d, b-d, c-d.
+    /// 0 if coplanar. Exactly the sign of the determinant of the rows a-d, b-d, c-d. This is Shewchuk's sign convention:
+    /// with a, b, c counter-clockwise seen from above, a point d above the plane gives -1 and a point below it gives +1.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">A coordinate is NaN, infinite, or outside the supported range.</exception>
     public static int Orient3D(
@@ -139,7 +140,7 @@ public static class ExactPredicates
         double ax, double ay, double az, double bx, double by, double bz,
         double cx, double cy, double cz, double dx, double dy, double dz)
     {
-        CheckRange(ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz);
+        Check(ax, nameof(ax)); Check(ay, nameof(ay)); Check(az, nameof(az)); Check(bx, nameof(bx)); Check(by, nameof(by)); Check(bz, nameof(bz)); Check(cx, nameof(cx)); Check(cy, nameof(cy)); Check(cz, nameof(cz)); Check(dx, nameof(dx)); Check(dy, nameof(dy)); Check(dz, nameof(dz));
         Arena ar = Arena.Get();
         int mark = ar.Mark;
         try
@@ -195,7 +196,7 @@ public static class ExactPredicates
 
     private static int InCircleExact(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy)
     {
-        CheckRange(ax, ay, bx, by, cx, cy, dx, dy);
+        Check(ax, nameof(ax)); Check(ay, nameof(ay)); Check(bx, nameof(bx)); Check(by, nameof(by)); Check(cx, nameof(cx)); Check(cy, nameof(cy)); Check(dx, nameof(dx)); Check(dy, nameof(dy));
         Arena ar = Arena.Get();
         int mark = ar.Mark;
         try
@@ -281,7 +282,7 @@ public static class ExactPredicates
         double cx, double cy, double cz, double dx, double dy, double dz,
         double ex, double ey, double ez)
     {
-        CheckRange(ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz, ex, ey, ez);
+        Check(ax, nameof(ax)); Check(ay, nameof(ay)); Check(az, nameof(az)); Check(bx, nameof(bx)); Check(by, nameof(by)); Check(bz, nameof(bz)); Check(cx, nameof(cx)); Check(cy, nameof(cy)); Check(cz, nameof(cz)); Check(dx, nameof(dx)); Check(dy, nameof(dy)); Check(dz, nameof(dz)); Check(ex, nameof(ex)); Check(ey, nameof(ey)); Check(ez, nameof(ez));
         Arena ar = Arena.Get();
         int mark = ar.Mark;
         try
@@ -310,39 +311,14 @@ public static class ExactPredicates
         }
     }
 
-    // Throws unless every value is finite and either zero or of magnitude in [2^-140, 2^200].
-    private static void CheckRange(double v0, double v1, double v2, double v3, double v4, double v5)
-    {
-        Check(v0); Check(v1); Check(v2); Check(v3); Check(v4); Check(v5);
-    }
-
-    private static void CheckRange(double v0, double v1, double v2, double v3, double v4, double v5, double v6, double v7)
-    {
-        CheckRange(v0, v1, v2, v3, v4, v5); Check(v6); Check(v7);
-    }
-
-    private static void CheckRange(
-        double v0, double v1, double v2, double v3, double v4, double v5,
-        double v6, double v7, double v8, double v9, double v10, double v11)
-    {
-        CheckRange(v0, v1, v2, v3, v4, v5); CheckRange(v6, v7, v8, v9, v10, v11);
-    }
-
-    private static void CheckRange(
-        double v0, double v1, double v2, double v3, double v4, double v5,
-        double v6, double v7, double v8, double v9, double v10, double v11,
-        double v12, double v13, double v14)
-    {
-        CheckRange(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11); Check(v12); Check(v13); Check(v14);
-    }
-
-    internal static void Check(double v)
+    // Throws unless the value is finite and either zero or of magnitude in [2^-140, 2^200]; paramName is the caller-visible parameter.
+    internal static void Check(double v, string paramName)
     {
         double m = Math.Abs(v);
         if (!(m <= MaxMagnitude) || (m != 0.0 && m < MinMagnitude))
         {
             throw new ArgumentOutOfRangeException(
-                nameof(v),
+                paramName,
                 v,
                 double.IsFinite(v)
                     ? "Predicate coordinates must be zero or have magnitude in [2^-140, 2^200]; got " + v.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "."

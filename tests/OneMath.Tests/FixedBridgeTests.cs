@@ -13,8 +13,8 @@ public class FixedBridgeTests
     public void Constants_match_the_format()
     {
         Assert.Equal((1L << 53) - 1, FixedBridge.MaxRaw);
-        Assert.Equal(2097152.0, FixedBridge.MaxMagnitude);
-        Assert.Equal(1L << 53, (long)(FixedBridge.MaxMagnitude * 4294967296.0));
+        Assert.Equal(2097152.0, FixedBridge.ExclusiveMagnitudeBound);
+        Assert.Equal(1L << 53, (long)(FixedBridge.ExclusiveMagnitudeBound * 4294967296.0));
     }
 
     [Theory]

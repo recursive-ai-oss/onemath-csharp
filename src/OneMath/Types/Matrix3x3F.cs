@@ -2,44 +2,61 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath;
 
 /// <summary>
 /// A 3x3 matrix of <see cref="float"/>, stored row-major in fields named <c>Mrc</c> (row r, column c).
 /// Vectors are columns: <c>Transform(v)</c> computes M * v. Products accumulate left to right.
+/// <para>
+/// <b>Matrix convention (the opposite of System.Numerics).</b> Vectors are columns and <c>a * b</c> applies <c>b</c> first.
+/// System.Numerics uses row vectors and <c>a * b</c> applies <c>a</c> first, although its field names <c>Mrc</c> are the same as
+/// these. A matrix copied field by field from System.Numerics is therefore the transpose of the transform it was; transpose
+/// when porting (<see cref="Matrix4x4F.FromSystemNumerics"/> does it for 4x4).
+/// </para>
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public readonly struct Matrix3x3F : IEquatable<Matrix3x3F>
 {
     /// <summary>Row 1, column 1.</summary>
+    [JsonInclude]
     public readonly float M11;
 
     /// <summary>Row 1, column 2.</summary>
+    [JsonInclude]
     public readonly float M12;
 
     /// <summary>Row 1, column 3.</summary>
+    [JsonInclude]
     public readonly float M13;
 
     /// <summary>Row 2, column 1.</summary>
+    [JsonInclude]
     public readonly float M21;
 
     /// <summary>Row 2, column 2.</summary>
+    [JsonInclude]
     public readonly float M22;
 
     /// <summary>Row 2, column 3.</summary>
+    [JsonInclude]
     public readonly float M23;
 
     /// <summary>Row 3, column 1.</summary>
+    [JsonInclude]
     public readonly float M31;
 
     /// <summary>Row 3, column 2.</summary>
+    [JsonInclude]
     public readonly float M32;
 
     /// <summary>Row 3, column 3.</summary>
+    [JsonInclude]
     public readonly float M33;
 
     /// <summary>Creates a matrix from its entries in row-major order.</summary>
+    [JsonConstructor]
     public Matrix3x3F(float m11, float m12, float m13, float m21, float m22, float m23, float m31, float m32, float m33)
     {
         M11 = m11;
@@ -57,12 +74,12 @@ public readonly struct Matrix3x3F : IEquatable<Matrix3x3F>
     public static Matrix3x3F Identity => new(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
     /// <summary>Creates a matrix whose columns are the given vectors.</summary>
-    public static Matrix3x3F FromColumns(Vector3F c1, Vector3F c2, Vector3F c3) =>
-        new(c1.X, c2.X, c3.X, c1.Y, c2.Y, c3.Y, c1.Z, c2.Z, c3.Z);
+    public static Matrix3x3F FromColumns(Vector3F column0, Vector3F column1, Vector3F column2) =>
+        new(column0.X, column1.X, column2.X, column0.Y, column1.Y, column2.Y, column0.Z, column1.Z, column2.Z);
 
     /// <summary>Creates a matrix whose rows are the given vectors.</summary>
-    public static Matrix3x3F FromRows(Vector3F r1, Vector3F r2, Vector3F r3) =>
-        new(r1.X, r1.Y, r1.Z, r2.X, r2.Y, r2.Z, r3.X, r3.Y, r3.Z);
+    public static Matrix3x3F FromRows(Vector3F row0, Vector3F row1, Vector3F row2) =>
+        new(row0.X, row0.Y, row0.Z, row1.X, row1.Y, row1.Z, row2.X, row2.Y, row2.Z);
 
     /// <summary>Creates a diagonal scale matrix.</summary>
     public static Matrix3x3F CreateScale(Vector3F scale) => new(scale.X, 0, 0, 0, scale.Y, 0, 0, 0, scale.Z);
@@ -120,7 +137,7 @@ public readonly struct Matrix3x3F : IEquatable<Matrix3x3F>
         M31 * v.X + M32 * v.Y + M33 * v.Z);
 
     /// <summary>The transposed matrix.</summary>
-    public Matrix3x3F Transpose() => new(M11, M21, M31, M12, M22, M32, M13, M23, M33);
+    public Matrix3x3F Transposed() => new(M11, M21, M31, M12, M22, M32, M13, M23, M33);
 
     /// <summary>Determinant by cofactor expansion along row 1: <c>(M11*C11 + M12*C12) + M13*C13</c>, with each cofactor Cij a difference of two products.</summary>
     public float Determinant()
@@ -179,4 +196,37 @@ public readonly struct Matrix3x3F : IEquatable<Matrix3x3F>
     /// <inheritdoc />
     public override string ToString() =>
         string.Create(CultureInfo.InvariantCulture, $"[{M11:R}, {M12:R}, {M13:R}; {M21:R}, {M22:R}, {M23:R}; {M31:R}, {M32:R}, {M33:R}]");
+
+    /// <summary>
+    /// Rotation of <paramref name="radians"/> about the X axis, counter-clockwise seen from +X (column vectors, right-handed):
+    /// rows <c>(1, 0, 0)</c>, <c>(0, c, -s)</c>, <c>(0, s, c)</c> with <c>(s, c) = Math32.SinCos(radians)</c>.
+    /// </summary>
+    public static Matrix3x3F CreateRotationX(float radians)
+    {
+        (float s, float c) = Math32.SinCos(radians);
+        return new(1, 0, 0, 0, c, -s, 0, s, c);
+    }
+
+    /// <summary>
+    /// Rotation of <paramref name="radians"/> about the Y axis (column vectors, right-handed): rows <c>(c, 0, s)</c>, <c>(0, 1, 0)</c>,
+    /// <c>(-s, 0, c)</c> with <c>(s, c) = Math32.SinCos(radians)</c>.
+    /// </summary>
+    public static Matrix3x3F CreateRotationY(float radians)
+    {
+        (float s, float c) = Math32.SinCos(radians);
+        return new(c, 0, s, 0, 1, 0, -s, 0, c);
+    }
+
+    /// <summary>
+    /// Rotation of <paramref name="radians"/> about the Z axis (column vectors, right-handed): rows <c>(c, -s, 0)</c>, <c>(s, c, 0)</c>,
+    /// <c>(0, 0, 1)</c> with <c>(s, c) = Math32.SinCos(radians)</c>.
+    /// </summary>
+    public static Matrix3x3F CreateRotationZ(float radians)
+    {
+        (float s, float c) = Math32.SinCos(radians);
+        return new(c, -s, 0, s, c, 0, 0, 0, 1);
+    }
+
+    /// <summary>The rotation matrix of a unit quaternion; the same as <see cref="QuaternionF.ToMatrix"/>.</summary>
+    public static Matrix3x3F CreateFromQuaternion(QuaternionF rotation) => rotation.ToMatrix();
 }

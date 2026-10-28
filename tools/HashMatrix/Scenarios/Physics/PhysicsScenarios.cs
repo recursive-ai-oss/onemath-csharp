@@ -134,7 +134,7 @@ internal static class PhysicsScenarios
             QuaternionD q = new QuaternionD(U(r), U(r), U(r), U(r) + 2).Normalized();
             Matrix3x3D rotated = InertiaD.Rotate(box, q);
             Write(c, rotated);
-            Write(c, InertiaD.Rotate(rotated, q.ToMatrix().Transpose()));
+            Write(c, InertiaD.Rotate(rotated, q.ToMatrix().Transposed()));
 
             var d = new Vector3D(U(r) * 4, U(r) * 4, U(r) * 4);
             Matrix3x3D at = InertiaD.ShiftToPoint(rotated, mass, d);
@@ -176,7 +176,7 @@ internal static class PhysicsScenarios
             QuaternionF q = new QuaternionF((float)U(r), (float)U(r), (float)U(r), (float)(U(r) + 2)).Normalized();
             Matrix3x3F rotated = InertiaF.Rotate(box, q);
             Write(c, rotated);
-            Write(c, InertiaF.Rotate(rotated, q.ToMatrix().Transpose()));
+            Write(c, InertiaF.Rotate(rotated, q.ToMatrix().Transposed()));
 
             var d = new Vector3F((float)(U(r) * 4), (float)(U(r) * 4), (float)(U(r) * 4));
             Matrix3x3F at = InertiaF.ShiftToPoint(rotated, mass, d);

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath;
 
@@ -13,12 +14,15 @@ namespace RecursiveAI.OneMath;
 public readonly struct Bounds3D : IEquatable<Bounds3D>
 {
     /// <summary>The corner with the smallest coordinates.</summary>
+    [JsonInclude]
     public readonly Vector3D Min;
 
     /// <summary>The corner with the largest coordinates.</summary>
+    [JsonInclude]
     public readonly Vector3D Max;
 
-    /// <summary>Creates a box from two corners as given (no sorting; use <see cref="FromPoints"/> for unordered input).</summary>
+    /// <summary>Creates a box from two corners as given (no sorting; use <see cref="CreateFromPoints"/> for unordered input).</summary>
+    [JsonConstructor]
     public Bounds3D(Vector3D min, Vector3D max)
     {
         Min = min;
@@ -31,10 +35,10 @@ public readonly struct Bounds3D : IEquatable<Bounds3D>
         new(double.NegativeInfinity, double.NegativeInfinity, double.NegativeInfinity));
 
     /// <summary>A box from its center and half-sizes: <c>(center - extents, center + extents)</c>.</summary>
-    public static Bounds3D FromCenterExtents(Vector3D center, Vector3D extents) => new(center - extents, center + extents);
+    public static Bounds3D CreateFromCenterExtents(Vector3D center, Vector3D extents) => new(center - extents, center + extents);
 
     /// <summary>The smallest box containing all points, folded in index order; <see cref="Empty"/> for an empty span.</summary>
-    public static Bounds3D FromPoints(ReadOnlySpan<Vector3D> points)
+    public static Bounds3D CreateFromPoints(ReadOnlySpan<Vector3D> points)
     {
         Bounds3D b = Empty;
         foreach (Vector3D p in points)
@@ -45,15 +49,19 @@ public readonly struct Bounds3D : IEquatable<Bounds3D>
     }
 
     /// <summary>True when any component of <see cref="Min"/> exceeds the matching component of <see cref="Max"/>.</summary>
+    [JsonIgnore]
     public bool IsEmpty => Min.X > Max.X || Min.Y > Max.Y || Min.Z > Max.Z;
 
     /// <summary>The size, <c>Max - Min</c>.</summary>
+    [JsonIgnore]
     public Vector3D Size => Max - Min;
 
     /// <summary>The half-size, <c>(Max - Min) * 0.5</c> (exact scaling by a power of two).</summary>
+    [JsonIgnore]
     public Vector3D Extents => (Max - Min) * (double)0.5;
 
     /// <summary>The center, <c>Min + (Max - Min) * 0.5</c>.</summary>
+    [JsonIgnore]
     public Vector3D Center => Min + (Max - Min) * (double)0.5;
 
     /// <summary>Volume, <c>(Size.X * Size.Y) * Size.Z</c>; zero for an empty box.</summary>

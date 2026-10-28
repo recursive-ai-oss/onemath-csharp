@@ -22,7 +22,7 @@ public class InertiaTests
     private static QuaternionD Axis(Vector3D axis, double angle)
     {
         // Half-angle sine and cosine from Math here: the library has no angle constructor, and the test only needs a rotation.
-        return QuaternionD.FromAxisSinCos(axis.Normalized(), Math.Sin(angle / 2), Math.Cos(angle / 2));
+        return QuaternionD.CreateFromAxisSinCos(axis.Normalized(), Math.Sin(angle / 2), Math.Cos(angle / 2));
     }
 
     private static double Trace(Matrix3x3D m) => m.M11 + m.M22 + m.M33;
@@ -60,7 +60,7 @@ public class InertiaTests
             Assert.Equal(e0.Values.Y, e1.Values.Y, 1e-12);
             Assert.Equal(e0.Values.Z, e1.Values.Z, 1e-12);
             // Rotating back recovers the tensor.
-            Near(t, InertiaD.Rotate(viaQ, q.ToMatrix().Transpose()), 1e-12);
+            Near(t, InertiaD.Rotate(viaQ, q.ToMatrix().Transposed()), 1e-12);
         }
     }
 
@@ -176,7 +176,7 @@ public class InertiaTests
             Assert.Equal(sorted.Values.X, p.Moments.X, 1e-12);
             Assert.Equal(sorted.Values.Y, p.Moments.Y, 1e-12);
             Assert.Equal(sorted.Values.Z, p.Moments.Z, 1e-12);
-            Near(world, p.Rotation * Matrix3x3D.CreateScale(p.Moments) * p.Rotation.Transpose(), 1e-12);
+            Near(world, p.Rotation * Matrix3x3D.CreateScale(p.Moments) * p.Rotation.Transposed(), 1e-12);
             Near(p.Rotation, p.Orientation.ToMatrix(), 1e-12);
             Assert.Equal(1, p.Orientation.Length(), 1e-12);
         }
@@ -221,7 +221,7 @@ public class InertiaTests
         var badPart = Assert.Throws<ArgumentOutOfRangeException>(() => InertiaD.Combine(new[]
         {
             new MassPropertiesD(1, default, t),
-            new MassPropertiesD(-2, default, t),
+            new MassPropertiesD(double.NaN, default, t),
         }));
         Assert.Contains("parts[1].Mass", badPart.Message);
     }

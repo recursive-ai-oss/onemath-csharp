@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath;
 
@@ -13,12 +14,15 @@ namespace RecursiveAI.OneMath;
 public readonly struct RigidTransformF : IEquatable<RigidTransformF>
 {
     /// <summary>The rotation applied first.</summary>
+    [JsonInclude]
     public readonly QuaternionF Rotation;
 
     /// <summary>The translation applied after the rotation.</summary>
+    [JsonInclude]
     public readonly Vector3F Translation;
 
     /// <summary>Creates a transform from its parts.</summary>
+    [JsonConstructor]
     public RigidTransformF(QuaternionF rotation, Vector3F translation)
     {
         Rotation = rotation;
@@ -42,9 +46,9 @@ public readonly struct RigidTransformF : IEquatable<RigidTransformF>
         new(a.Rotation * b.Rotation, a.Rotation.Rotate(b.Translation) + a.Translation);
 
     /// <summary>The inverse transform: the conjugate rotation and the translation <c>-(conjugate.Rotate(Translation))</c>.</summary>
-    public RigidTransformF Inverse()
+    public RigidTransformF Inverted()
     {
-        QuaternionF c = Rotation.Conjugate();
+        QuaternionF c = Rotation.Conjugated();
         return new(c, -c.Rotate(Translation));
     }
 

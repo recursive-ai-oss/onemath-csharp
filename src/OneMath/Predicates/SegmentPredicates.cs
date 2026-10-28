@@ -36,8 +36,8 @@ public static class SegmentPredicates
         double ax, double ay, double bx, double by,
         double cx, double cy, double dx, double dy)
     {
-        ExactPredicates.Check(ax); ExactPredicates.Check(ay); ExactPredicates.Check(bx); ExactPredicates.Check(by);
-        ExactPredicates.Check(cx); ExactPredicates.Check(cy); ExactPredicates.Check(dx); ExactPredicates.Check(dy);
+        ExactPredicates.Check(ax, nameof(ax)); ExactPredicates.Check(ay, nameof(ay)); ExactPredicates.Check(bx, nameof(bx)); ExactPredicates.Check(by, nameof(by));
+        ExactPredicates.Check(cx, nameof(cx)); ExactPredicates.Check(cy, nameof(cy)); ExactPredicates.Check(dx, nameof(dx)); ExactPredicates.Check(dy, nameof(dy));
 
         bool abPoint = ax == bx && ay == by;
         bool cdPoint = cx == dx && cy == dy;
