@@ -1,0 +1,125 @@
+name: ci
+
+# Builds, tests and publishes the NativeAOT smoke app on four platforms, checks the package, and compares the
+# determinism manifest across platforms and on WebAssembly. Nothing is pushed anywhere.
+on:
+  push:
+    branches: [main, 'ci-check/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, rid: win-x64 }
+          - { os: ubuntu-latest, rid: linux-x64 }
+          - { os: ubuntu-24.04-arm, rid: linux-arm64 }
+          - { os: macos-latest, rid: osx-arm64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Build output goes outside the checkout, as it does locally; the runner context is only available inside steps.
+      - name: Artifacts directory
+        shell: bash
+        run: echo "ONEMATH_ARTIFACTS=$RUNNER_TEMP/artifacts" >> "$GITHUB_ENV"
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - name: Build
+        run: dotnet build OneMath.slnx -c Release
+      - name: Test
+        run: dotnet test --solution OneMath.slnx -c Release --no-build
+      - name: Native AOT toolchain (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang zlib1g-dev
+      - name: Publish AOT smoke app (warnings are errors)
+        run: dotnet publish tests/AotSmoke -c Release -r ${{ matrix.rid }} -o ${{ runner.temp }}/smoke -warnaserror
+      - name: Run AOT smoke app and keep its manifest
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/manifests"
+          "$RUNNER_TEMP/smoke/AotSmoke" --out "$RUNNER_TEMP/manifests/aot-${{ matrix.rid }}.txt"
+      - name: Run the JIT hash matrix and keep its manifest
+        shell: bash
+        run: dotnet run -c Release --no-build --project tools/HashMatrix -- --threads 1 --out "$RUNNER_TEMP/manifests/jit-${{ matrix.rid }}.txt"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: manifests-${{ matrix.rid }}
+          path: ${{ runner.temp }}/manifests/*.txt
+          if-no-files-found: error
+
+  wasm:
+    # The same scenarios on browser WebAssembly under Node, compared with the JIT manifest of this runner.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Artifacts directory
+        run: echo "ONEMATH_ARTIFACTS=$RUNNER_TEMP/artifacts" >> "$GITHUB_ENV"
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - name: WebAssembly build tools
+        run: dotnet workload install wasm-tools
+      - name: Hash matrix, JIT against browser-wasm
+        run: bash tools/hash-matrix.sh -o "$RUNNER_TEMP/hm" jit wasm
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: manifests-wasm
+          path: ${{ runner.temp }}/hm/*.txt
+          if-no-files-found: error
+
+  compare:
+    # Every platform must produce the same manifest.
+    needs: [build, wasm]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: manifests-*
+          path: manifests
+          merge-multiple: true
+      - name: Compare manifests
+        run: |
+          ls -l manifests
+          first=$(find manifests -name '*.txt' | sort | head -1)
+          status=0
+          for f in manifests/*.txt; do
+            if ! diff -q <(tr -d "\r" < "$first") <(tr -d "\r" < "$f") >/dev/null; then echo "::error::$f differs from $first"; status=1; fi
+          done
+          tail -n 1 "$first"
+          exit $status
+
+  pack:
+    # Builds the package as an artifact only, and checks that the symbol package exists.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Artifacts directory
+        run: echo "ONEMATH_ARTIFACTS=$RUNNER_TEMP/artifacts" >> "$GITHUB_ENV"
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - name: Pack
+        run: |
+          dotnet pack src/OneMath -c Release -o "$RUNNER_TEMP/packages"
+          ls -l "$RUNNER_TEMP/packages"
+          ls "$RUNNER_TEMP/packages"/*.nupkg "$RUNNER_TEMP/packages"/*.snupkg
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: packages
+          path: ${{ runner.temp }}/packages/*

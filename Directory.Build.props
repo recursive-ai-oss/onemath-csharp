@@ -4,12 +4,15 @@
     <!-- The package id derives from this single property. -->
     <PackagePrefix>RecursiveAI</PackagePrefix>
     <PackageBaseName>$(PackagePrefix).OneMath</PackageBaseName>
-    <Version>0.1.0-dev</Version>
+    <!-- The one place the package version lives. -->
+    <Version>0.1.0-preview.5</Version>
     <Authors>Recursive AI, LLC</Authors>
     <Company>Recursive AI, LLC</Company>
     <Copyright>Copyright (c) Recursive AI, LLC</Copyright>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/recursive-ai-oss/onemath-csharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://recursiveai.org/onemath/</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -22,7 +25,6 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <Deterministic>true</Deterministic>
-    <ContinuousIntegrationBuild Condition="'$(ContinuousIntegrationBuild)' == ''">true</ContinuousIntegrationBuild>
     <Configurations>Debug;Release;Checked</Configurations>
     <InvariantGlobalization>true</InvariantGlobalization>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -30,10 +32,20 @@
     <TieredPGO>false</TieredPGO>
   </PropertyGroup>
 
-  <!-- Build output never lands in the checkout. -->
+  <!-- Reproducible packages: path mapping applies to the library only (src/). Test projects keep real paths because
+       some tests locate data from [CallerFilePath]. -->
   <PropertyGroup>
-    <ArtifactsPath Condition="'$(ONEPATH_ARTIFACTS)' != ''">$(ONEPATH_ARTIFACTS)</ArtifactsPath>
-    <ArtifactsPath Condition="'$(ONEPATH_ARTIFACTS)' == ''">$(HOME)/.cache/onemath-artifacts</ArtifactsPath>
+    <_ProjectDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)'))</_ProjectDir>
+    <_SrcDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', 'src'))</_SrcDir>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true' and $(_ProjectDir.StartsWith('$(_SrcDir)'))">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Build output never lands in the checkout: ONEMATH_ARTIFACTS (or the older ONEPATH_ARTIFACTS), else a per-user cache. -->
+  <PropertyGroup>
+    <ArtifactsPath Condition="'$(ONEMATH_ARTIFACTS)' != ''">$(ONEMATH_ARTIFACTS)</ArtifactsPath>
+    <ArtifactsPath Condition="'$(ArtifactsPath)' == '' and '$(ONEPATH_ARTIFACTS)' != ''">$(ONEPATH_ARTIFACTS)</ArtifactsPath>
+    <ArtifactsPath Condition="'$(ArtifactsPath)' == '' and '$(HOME)' != ''">$(HOME)/.cache/onemath-artifacts</ArtifactsPath>
+    <ArtifactsPath Condition="'$(ArtifactsPath)' == ''">$(USERPROFILE)/.cache/onemath-artifacts</ArtifactsPath>
   </PropertyGroup>
 
   <!-- Checked: Release optimisations plus bounds-checked internal accessors (CHECKED). -->
