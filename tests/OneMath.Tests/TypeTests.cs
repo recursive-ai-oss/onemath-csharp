@@ -146,7 +146,7 @@ public class MatrixTests
         Assert.Equal(new Matrix2x2F(-2, 1, 1.5f, -0.5f), i2);
         Assert.Equal(new Matrix2x2F(7, 10, 15, 22), m2 * m2);
         Assert.Equal(new Vector2F(5, 11), m2.Transform(new Vector2F(1, 2)));
-        Assert.Equal(new Matrix2x2F(1, 3, 2, 4), m2.Transpose());
+        Assert.Equal(new Matrix2x2F(1, 3, 2, 4), m2.Transposed());
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class MatrixTests
         Assert.False(new Matrix2x2F(1, 2, 2, 4).TryInvert(out Matrix2x2F z2));
         Assert.Equal(default, z2);
         Assert.False(new Matrix3x3F(1, 2, 3, 2, 4, 6, 0, 1, 1).TryInvert(out _));
-        Assert.False(Matrix4x4D.Identity.Transpose().Equals(default));
+        Assert.False(Matrix4x4D.Identity.Transposed().Equals(default));
         Assert.False(new Matrix4x4D(1, 2, 3, 4, 2, 4, 6, 8, 0, 1, 0, 0, 0, 0, 1, 0).TryInvert(out _));
         Assert.False(new Matrix3x3D(double.NaN, 0, 0, 0, 1, 0, 0, 0, 1).TryInvert(out _));
     }
@@ -225,7 +225,7 @@ public class MatrixTests
                 a[0, 0], a[0, 1], a[0, 2], a[0, 3], a[1, 0], a[1, 1], a[1, 2], a[1, 3],
                 a[2, 0], a[2, 1], a[2, 2], a[2, 3], a[3, 0], a[3, 1], a[3, 2], a[3, 3]);
             Assert.True(Math.Abs(m.Determinant() - Det(a, 4)) < 1e-12);
-            Assert.True(Math.Abs(m.Determinant() - m.Transpose().Determinant()) < 1e-12);
+            Assert.True(Math.Abs(m.Determinant() - m.Transposed().Determinant()) < 1e-12);
         }
     }
 
@@ -260,9 +260,9 @@ public class MatrixTests
         var m = Matrix3x3F.FromRows(new Vector3F(1, 2, 3), new Vector3F(4, 5, 6), new Vector3F(7, 8, 9));
         Assert.Equal(new Vector3F(2, 5, 8), m.Column(1));
         Assert.Equal(m, Matrix3x3F.FromColumns(new Vector3F(1, 4, 7), new Vector3F(2, 5, 8), new Vector3F(3, 6, 9)));
-        Assert.Equal(m.Transpose().Transpose(), m);
+        Assert.Equal(m.Transposed().Transposed(), m);
         Assert.Throws<ArgumentOutOfRangeException>(() => m.Row(3));
-        Assert.Equal(Matrix4x4F.Identity, Matrix4x4F.Identity.Transpose());
+        Assert.Equal(Matrix4x4F.Identity, Matrix4x4F.Identity.Transposed());
         Assert.Equal(m.ToDouble().ToSingle(), m);
     }
 }
@@ -305,7 +305,7 @@ public class QuaternionTests
         Assert.Equal(new Vector3F(-1, -2, 3), half.Rotate(new Vector3F(1, 2, 3)));
         // 90 degrees about Z from precomputed sin/cos of 45 degrees.
         double s = Math.Sqrt(0.5);
-        var q = QuaternionD.FromAxisSinCos(Vector3D.UnitZ, s, s);
+        var q = QuaternionD.CreateFromAxisSinCos(Vector3D.UnitZ, s, s);
         Vector3D r = q.Rotate(Vector3D.UnitX);
         Assert.True(Math.Abs(r.X) < 1e-15 && Math.Abs(r.Y - 1) < 1e-15 && r.Z == 0);
         Assert.Equal(new Vector3F(0, 0, 0), QuaternionF.Identity.Rotate(Vector3F.Zero));
@@ -323,7 +323,7 @@ public class QuaternionTests
             Vector3D a = q.Rotate(v), b = m.Transform(v);
             Assert.True((a - b).Length() < 1e-14);
             Assert.True(Math.Abs(m.Determinant() - 1) < 1e-14);
-            QuaternionD back = QuaternionD.FromMatrix(m);
+            QuaternionD back = QuaternionD.CreateFromRotationMatrix(m);
             double d = Math.Abs(QuaternionD.Dot(q, back));
             Assert.True(Math.Abs(d - 1) < 1e-13, $"dot {d}");
         }
@@ -365,13 +365,13 @@ public class TransformAndBoundsTests
     public void Rigid_transform_composition_inverse_and_matrix_agree()
     {
         double s = Math.Sqrt(0.5);
-        var a = new RigidTransformD(QuaternionD.FromAxisSinCos(Vector3D.UnitZ, s, s), new Vector3D(1, 2, 3));
-        var b = new RigidTransformD(QuaternionD.FromAxisSinCos(Vector3D.UnitX, s, s), new Vector3D(-4, 0, 5));
+        var a = new RigidTransformD(QuaternionD.CreateFromAxisSinCos(Vector3D.UnitZ, s, s), new Vector3D(1, 2, 3));
+        var b = new RigidTransformD(QuaternionD.CreateFromAxisSinCos(Vector3D.UnitX, s, s), new Vector3D(-4, 0, 5));
         var p = new Vector3D(0.5, -1.5, 2.5);
         Vector3D viaCompose = (a * b).TransformPoint(p);
         Vector3D viaSteps = a.TransformPoint(b.TransformPoint(p));
         Assert.True((viaCompose - viaSteps).Length() < 1e-14);
-        Assert.True((a.Inverse().TransformPoint(a.TransformPoint(p)) - p).Length() < 1e-14);
+        Assert.True((a.Inverted().TransformPoint(a.TransformPoint(p)) - p).Length() < 1e-14);
         Assert.True((a.ToMatrix().TransformPoint(p) - a.TransformPoint(p)).Length() < 1e-14);
         Assert.Equal(new Vector3F(1, 2, 3), RigidTransformF.Identity.TransformPoint(new Vector3F(1, 2, 3)));
     }
@@ -380,7 +380,7 @@ public class TransformAndBoundsTests
     public void Affine_composition_and_inverse()
     {
         var a = new Affine3F(new Matrix3x3F(2, 0, 0, 0, 4, 0, 0, 0, 8), new Vector3F(1, 2, 3));
-        var b = Affine3F.FromTranslation(new Vector3F(10, 20, 30));
+        var b = Affine3F.CreateTranslation(new Vector3F(10, 20, 30));
         Assert.Equal(new Vector3F(23, 86, 251), (a * b).TransformPoint(Vector3F.One));
         Assert.Equal((a * b).TransformPoint(Vector3F.One), a.TransformPoint(b.TransformPoint(Vector3F.One)));
         Assert.True(a.TryInvert(out Affine3F inv));
@@ -393,8 +393,8 @@ public class TransformAndBoundsTests
     [Fact]
     public void Bounds_behave()
     {
-        var a = Bounds3F.FromPoints(new[] { new Vector3F(0, 0, 0), new Vector3F(2, 4, 6) });
-        var b = Bounds3F.FromCenterExtents(new Vector3F(2, 4, 6), Vector3F.One);
+        var a = Bounds3F.CreateFromPoints(new[] { new Vector3F(0, 0, 0), new Vector3F(2, 4, 6) });
+        var b = Bounds3F.CreateFromCenterExtents(new Vector3F(2, 4, 6), Vector3F.One);
         Assert.Equal(new Vector3F(1, 2, 3), a.Center);
         Assert.Equal(48f, a.Volume());
         Assert.Equal(2f * (8 + 24 + 12), a.SurfaceArea());
@@ -403,21 +403,21 @@ public class TransformAndBoundsTests
         Assert.True(a.Contains(new Vector3F(2, 4, 6)));
         Assert.Equal(new Bounds3F(Vector3F.Zero, new Vector3F(3, 5, 7)), Bounds3F.Union(a, b));
         Assert.Equal(new Bounds3F(new Vector3F(1, 3, 5), new Vector3F(2, 4, 6)), Bounds3F.Intersection(a, b));
-        Assert.True(Bounds3F.Intersection(a, Bounds3F.FromCenterExtents(new Vector3F(10, 10, 10), Vector3F.One)).IsEmpty);
+        Assert.True(Bounds3F.Intersection(a, Bounds3F.CreateFromCenterExtents(new Vector3F(10, 10, 10), Vector3F.One)).IsEmpty);
         Assert.True(Bounds3F.Empty.IsEmpty);
         Assert.False(Bounds3F.Empty.Intersects(a));
         Assert.False(a.Intersects(Bounds3F.Empty));
         Assert.Equal(a, Bounds3F.Union(Bounds3F.Empty, a));
-        Assert.Equal(Bounds3F.Empty, Bounds3F.FromPoints(ReadOnlySpan<Vector3F>.Empty));
+        Assert.Equal(Bounds3F.Empty, Bounds3F.CreateFromPoints(ReadOnlySpan<Vector3F>.Empty));
         Assert.Equal(0f, Bounds3F.Empty.Volume());
         Assert.Equal(new Bounds3F(new Vector3F(-1, -1, -1), new Vector3F(3, 5, 7)), a.Inflate(1));
 
-        var r = Bounds2D.FromPoints(new[] { new Vector2D(-1, -1), new Vector2D(3, 1) });
+        var r = Bounds2D.CreateFromPoints(new[] { new Vector2D(-1, -1), new Vector2D(3, 1) });
         Assert.Equal(8.0, r.Area());
         Assert.Equal(new Vector2D(1, 0), r.Center);
         Assert.True(r.Contains(new Vector2D(3, 1)));
         Assert.False(r.Contains(new Vector2D(3.0000001, 1)));
         Assert.Equal(r, r.ToSingle().ToDouble());
-        Assert.True(r.Contains(Bounds2D.FromCenterExtents(Vector2D.Zero, new Vector2D(1, 1))));
+        Assert.True(r.Contains(Bounds2D.CreateFromCenterExtents(Vector2D.Zero, new Vector2D(1, 1))));
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath;
 
@@ -10,18 +11,23 @@ namespace RecursiveAI.OneMath;
 public readonly struct Vector4D : IEquatable<Vector4D>
 {
     /// <summary>The X component.</summary>
+    [JsonInclude]
     public readonly double X;
 
     /// <summary>The Y component.</summary>
+    [JsonInclude]
     public readonly double Y;
 
     /// <summary>The Z component.</summary>
+    [JsonInclude]
     public readonly double Z;
 
     /// <summary>The W component.</summary>
+    [JsonInclude]
     public readonly double W;
 
     /// <summary>Creates a vector from its components.</summary>
+    [JsonConstructor]
     public Vector4D(double x, double y, double z, double w)
     {
         X = x;
@@ -46,6 +52,7 @@ public readonly struct Vector4D : IEquatable<Vector4D>
     public static Vector4D One => new(1, 1, 1, 1);
 
     /// <summary>The X, Y and Z components as a 3D vector.</summary>
+    [JsonIgnore]
     public Vector3D XYZ => new(X, Y, Z);
 
     /// <summary>Returns the component at <paramref name="index"/> (0 = X, 1 = Y, 2 = Z, 3 = W). Throws <see cref="ArgumentOutOfRangeException"/> for any other index.</summary>
@@ -129,4 +136,11 @@ public readonly struct Vector4D : IEquatable<Vector4D>
 
     /// <inheritdoc />
     public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"({X:R}, {Y:R}, {Z:R}, {W:R})");
+
+
+    /// <summary>Converts from a <see cref="System.Numerics.Vector4"/> (exact).</summary>
+    public static Vector4D FromSystemNumerics(System.Numerics.Vector4 v) => new(v.X, v.Y, v.Z, v.W);
+
+    /// <summary>Converts to a <see cref="System.Numerics.Vector4"/>; each component is narrowed to float32 (round to nearest even).</summary>
+    public System.Numerics.Vector4 ToSystemNumerics() => new((float)X, (float)Y, (float)Z, (float)W);
 }

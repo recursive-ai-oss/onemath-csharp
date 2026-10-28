@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RecursiveAI.OneMath;
 
@@ -10,15 +11,19 @@ namespace RecursiveAI.OneMath;
 public readonly struct Vector3F : IEquatable<Vector3F>
 {
     /// <summary>The X component.</summary>
+    [JsonInclude]
     public readonly float X;
 
     /// <summary>The Y component.</summary>
+    [JsonInclude]
     public readonly float Y;
 
     /// <summary>The Z component.</summary>
+    [JsonInclude]
     public readonly float Z;
 
     /// <summary>Creates a vector from its components.</summary>
+    [JsonConstructor]
     public Vector3F(float x, float y, float z)
     {
         X = x;
@@ -129,4 +134,11 @@ public readonly struct Vector3F : IEquatable<Vector3F>
 
     /// <inheritdoc />
     public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"({X:R}, {Y:R}, {Z:R})");
+
+
+    /// <summary>Converts from a <see cref="System.Numerics.Vector3"/>.</summary>
+    public static Vector3F FromSystemNumerics(System.Numerics.Vector3 v) => new(v.X, v.Y, v.Z);
+
+    /// <summary>Converts to a <see cref="System.Numerics.Vector3"/>.</summary>
+    public System.Numerics.Vector3 ToSystemNumerics() => new(X, Y, Z);
 }

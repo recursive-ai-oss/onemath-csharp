@@ -8,6 +8,34 @@ The first stable release. The public API is frozen under semantic versioning. Re
 
 From this release on, results are also bit-identical across every release of a major version: no 1.x minor or patch release changes an existing result (see "The determinism promise" in the README).
 
+### Changed (breaking since 0.1.0-preview.5)
+
+One verb per concept: `Create...` builds a value from parts or another concept, `From...` is only a representation change, and instance methods that return a new value are participles. Numeric results are unchanged; only names move.
+
+| Before | Now |
+|---|---|
+| `Matrix2x2/3x3/4x4 D/F .Transpose()` | `.Transposed()` |
+| `QuaternionD/F .Conjugate()` | `.Conjugated()` |
+| `RigidTransformD/F .Inverse()` | `.Inverted()` |
+| `QuaternionD/F .FromAxisSinCos(axis, sin, cos)` | `.CreateFromAxisSinCos(axis, sin, cos)` |
+| `QuaternionD/F .FromMatrix(m)` | `.CreateFromRotationMatrix(m)` |
+| `Affine3D/F .FromTranslation(v)` | `.CreateTranslation(v)` |
+| `Bounds2/3 D/F .FromPoints(points)` | `.CreateFromPoints(points)` |
+| `Bounds2/3 D/F .FromCenterExtents(c, e)` | `.CreateFromCenterExtents(c, e)` |
+| `FixedBridge.MaxMagnitude` (`const`) | `FixedBridge.ExclusiveMagnitudeBound` (static property; the bound is exclusive) |
+| `PrincipalAxesD/F(moments, rotation, orientation)` | `PrincipalAxesD/F(moments, rotation)`; `Orientation` is derived from `Rotation`, so the two cannot disagree |
+| `MassPropertiesD/F(mass, ...)` accepted a negative mass | throws `ArgumentOutOfRangeException` (parameter `mass`) |
+
+Also: the parameters of `FromRows` / `FromColumns` are now `row0..` / `column0..` (0-based, like `Row(int)` and `Column(int)`); `ParamName` of every argument exception names a parameter of the public method that was called (predicates: `ax`..`ez`; `InertiaD/F.PrincipalAxes`: `tensor`); all public value types serialize with System.Text.Json (public fields and component constructors, derived members ignored; bit-exact round trip with default options and with source-generated metadata); the package project URL points at the repository; the matrix convention (column vectors, the opposite of System.Numerics) and the predicate input range (out-of-range input may throw) are documented in the README, the package readme and the type and method docs.
+
+### Added
+
+- `QuaternionD/F`: `CreateFromAxisAngle` (exactly `CreateFromAxisSinCos(axis, SinCos(radians / 2))`) and `Slerp` (shortest arc; evaluation order in `docs/evaluation-order.md`).
+- `Matrix3x3D/F`: `CreateRotationX/Y/Z`, `CreateFromQuaternion`. `Matrix4x4D/F`: `CreateRotationX/Y/Z`, `CreateFromQuaternion`, `CreateFromMatrix3x3`, `CreateFromAffine`.
+- `Affine3D/F`: `CreateScale`, `CreateFromLinear`, `CreateFromQuaternion`, `CreateRotationX/Y/Z`.
+- `FromSystemNumerics` / `ToSystemNumerics` on `Vector2/3/4`, `Quaternion` and `Matrix4x4` (D and F). The matrix conversions transpose; double to float rounds to nearest even.
+- Hash-matrix scenarios `types/f32/rotation`, `types/f64/rotation` and `types/json` (a source-generated JSON round trip that also runs in the NativeAOT and WebAssembly smoke apps). Every earlier manifest line is unchanged.
+
 ### Removed
 
 - `ExpansionArithmetic` is no longer public. Its preconditions are not checked (invalid input gives silently wrong results), and publishing it would freeze Shewchuk's output-size rules. It remains the internal engine behind `ExactPredicates` and `SegmentPredicates`; exposing a checked form later would be an additive change.

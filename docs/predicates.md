@@ -13,7 +13,7 @@ Only IEEE 754 binary64 `+`, `-`, `*` with round-to-nearest-even and `abs`. No fu
 | Call | Returns the sign of |
 |---|---|
 | `Orient2D(a, b, c)` | `(ax-cx)(by-cy) - (ay-cy)(bx-cx)`. +1 = counter-clockwise (c left of a→b, y up). |
-| `Orient3D(a, b, c, d)` | `det[a-d; b-d; c-d]`. +1 = d below the plane abc, where a, b, c run counter-clockwise seen from above. |
+| `Orient3D(a, b, c, d)` | `det[a-d; b-d; c-d]`. +1 = d below the plane abc, where a, b, c run counter-clockwise seen from above (Shewchuk's convention: a point above the plane gives -1). |
 | `InCircle(a, b, c, d)` | `det[(a-d, \|a-d\|²); (b-d, \|b-d\|²); (c-d, \|c-d\|²)]`. +1 = d inside the circle when a, b, c are counter-clockwise. |
 | `InSphere(a, b, c, d, e)` | `det[(a-e, \|a-e\|²); …; (d-e, \|d-e\|²)]` (4×4, rows a, b, c, d). +1 = e inside the sphere when `Orient3D(a, b, c, d) > 0`. |
 | `SegmentPredicates.Classify(a, b, c, d)` | relation of closed segments ab and cd: `Disjoint`, `Proper`, `Touching`, `CollinearOverlap`. |
@@ -24,7 +24,8 @@ The result is `-1`, `0` or `+1`, and equals the sign of the determinant of the *
 
 - Every coordinate must be finite. NaN or ±∞ throws `ArgumentOutOfRangeException`.
 - Exactness is guaranteed when each coordinate is 0 or has magnitude in [2^-140, 2^200]. The determinants have degree at most 5 (in-sphere), so every product then stays within [2^-960, 2^1005]: nothing overflows and the error term of no product underflows.
-- Outside that range a call that needs the exact path throws `ArgumentOutOfRangeException` (naming the value). A call the filter decides by margin returns that sign, which is still correct; the filter's absolute slack (below) keeps underflowed products from fooling it. `SegmentPredicates.Classify` always checks the range first.
+- **Out-of-range input may throw.** Outside that range a call that needs the exact path throws `ArgumentOutOfRangeException`; its `ParamName` is the coordinate parameter of the method that was called (`cx`, `dz`, ...). A call the filter decides by margin returns that sign, which is still correct, so whether an out-of-range call throws depends on the values; do not rely on either outcome and keep inputs inside the range. `SegmentPredicates.Classify` always checks the range first, so it throws for every out-of-range coordinate.
+- A later release may extend the exact path (for example by power-of-two pre-scaling) so that out-of-range finite input stops throwing; removing an exception is compatible, so callers must not depend on it being thrown.
 - The coordinate rule of the family (|x| < 2^21, resolution 2^-32) is far inside the range.
 
 ## Stage A: the floating-point filter
