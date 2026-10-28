@@ -9,7 +9,7 @@ namespace RecursiveAI.OneMath.Predicates;
 /// infinite precision on the given doubles. Each first evaluates the determinant in ordinary
 /// floating point with a rigorous error bound (Shewchuk 1997, "stage A") and returns when the
 /// result is larger than the bound; otherwise it re-evaluates with exact expansion arithmetic
-/// (<see cref="ExpansionArithmetic"/>). The sign is therefore the same as the exact one and identical on
+/// (expansion arithmetic). The sign is therefore the same as the exact one and identical on
 /// every platform: only IEEE-exact <c>+ - *</c> are used, with no fused multiply-add.
 /// </para>
 /// <para>

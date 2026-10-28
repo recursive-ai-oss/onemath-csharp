@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ExpansionArithmetic became internal in 1.0.0: its preconditions are unchecked, so it is not public API. -->
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:RecursiveAI.OneMath.Predicates.ExpansionArithmetic</Target>
+    <Left>lib/net10.0/RecursiveAI.OneMath.dll</Left>
+    <Right>lib/net10.0/RecursiveAI.OneMath.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+</Suppressions>

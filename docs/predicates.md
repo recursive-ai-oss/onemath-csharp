@@ -1,6 +1,6 @@
 # Exact geometric predicates
 
-Normative description of `RecursiveAI.OneMath.Predicates`. A port that follows this text produces the same signs on every input, and the same expansion components in the raw tier.
+Normative description of `RecursiveAI.OneMath.Predicates`. A port that follows this text produces the same signs on every input, and the same expansion components in the internal engine.
 
 Sources: Shewchuk, *Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates* (Discrete & Computational Geometry 18, 1997); Dekker (1971), Knuth (TAOCP vol. 2) and Priest (1991) for the error-free transformations.
 
@@ -55,7 +55,9 @@ When the filter cannot decide, the determinant is evaluated exactly with expansi
 - 3×3 determinants expand along the first row of 2×2 minors; the in-sphere 4×4 uses the cofactor form of the filter's last line, with the four 3×3 minors computed on the translated rows in the order named above. Lifts are exact sums of exact squares.
 - Products of expansions are sums, in increasing component order of the right factor, of `Scale` results.
 
-## Expansion arithmetic (raw tier)
+## Expansion arithmetic (internal engine)
+
+`ExpansionArithmetic` is internal: it is the engine behind `ExactPredicates` and `SegmentPredicates`, not public API (its preconditions are unchecked, and its output-size rules are not a promise). The text below is normative for the predicates' results.
 
 An expansion is a list of doubles, sorted by increasing magnitude, nonoverlapping (the highest set bit of each component is below the lowest set bit of the next), with no zero component. The value is the exact sum; the sign is the sign of the last component; zero is the empty list.
 

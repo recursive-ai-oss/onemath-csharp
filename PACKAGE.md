@@ -16,6 +16,6 @@ long raw = FixedBridge.FromDouble(1.5);            // Q31.32 fixed point <-> dou
 - **Fixed-point bridge:** `FixedBridge` converts Q31.32 integers to and from double, exact for magnitudes below 2^21 and rejecting beyond.
 - **Physics math:** symmetric 3x3 eigen decomposition and inertia tensors in `RecursiveAI.OneMath.Physics`.
 
-**Preview.** This is a 0.x preview: the API may still change. Results are checked against exact references and compared across x64, arm64 and WebAssembly in the repository's hash matrix.
+**Stable.** The public API follows semantic versioning from 1.0.0. Results are checked against exact references and compared across x64, arm64 and WebAssembly in the repository's hash matrix.
 
 Full documentation, the normative notes and the changelog: https://github.com/recursive-ai-oss/onemath-csharp/blob/main/README.md. Licensed under MIT or Apache-2.0, at your option.

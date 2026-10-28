@@ -3,7 +3,7 @@ using System;
 namespace RecursiveAI.OneMath.Predicates;
 
 /// <summary>
-/// Exact floating-point expansion arithmetic (the raw tier under <see cref="ExactPredicates"/>).
+/// Exact floating-point expansion arithmetic (the internal engine under <see cref="ExactPredicates"/> and <see cref="SegmentPredicates"/>; not public API because its preconditions are not checked).
 /// <para>
 /// An <i>expansion</i> is a sequence of doubles whose exact sum is the value it represents. Every
 /// expansion this class produces is <i>zero-eliminated</i> (no zero component), <i>nonoverlapping</i>
@@ -23,7 +23,7 @@ namespace RecursiveAI.OneMath.Predicates;
 /// products need the sum of exponent ranges to stay inside double's range. Operations do not check this.
 /// </para>
 /// </summary>
-public static class ExpansionArithmetic
+internal static class ExpansionArithmetic
 {
     // 2^27 + 1: splits a 53-bit significand into two 26-bit halves (Dekker 1971; Shewchuk 1997, Sec. 2.2).
     private const double Splitter = 134217729.0;
