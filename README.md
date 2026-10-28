@@ -28,7 +28,9 @@ long raw = FixedBridge.FromDouble(1.5);                        // Q31.32 fixed p
 
 A result depends only on its inputs: not on the OS, the CPU or its features (SIMD or scalar, with or without FMA hardware), the runtime version, the JIT tier, NativeAOT or WebAssembly, or the thread count. The library never calls `Math.Sin` and friends and never uses fused multiply-add; a banned-symbol analyzer enforces this at build time.
 
-The promise is tested by a hash matrix: [tools/HashMatrix](tools/HashMatrix) runs fixed scenarios and writes a SHA-256 manifest, and the manifests must be equal across x64 JIT, scalar (`DOTNET_EnableHWIntrinsic=0`), `DOTNET_EnableAVX2=0`, one thread and all cores, NativeAOT, browser-wasm (interpreted and AOT-compiled) and osx-arm64. See [docs/hash-matrix.md](docs/hash-matrix.md).
+**Across versions.** Within a major version, every release gives the same bits for the same inputs: no 1.x minor or patch release changes the result of any existing function, type or predicate. A change that would alter an existing result, even a more accurate one, either ships as a new member that leaves the old one as it was, or waits for the next major version and is listed in the changelog. Members added in a minor release then keep their results for the rest of that major version. So a deterministic host can update within 1.x without breaking replays, saved games or lockstep peers that run a different 1.x release.
+
+The promise is tested by a hash matrix: [tools/HashMatrix](tools/HashMatrix) runs fixed scenarios and writes a SHA-256 manifest, and the manifests must be equal across x64 JIT, scalar (`DOTNET_EnableHWIntrinsic=0`), `DOTNET_EnableAVX2=0`, one thread and all cores, NativeAOT, browser-wasm (interpreted and AOT-compiled) and osx-arm64. See [docs/hash-matrix.md](docs/hash-matrix.md). Across versions, every line of the previous release's manifest must appear unchanged in the next release's; a minor release may only add lines.
 
 ## Speed
 

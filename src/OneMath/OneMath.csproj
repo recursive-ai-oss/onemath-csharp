@@ -4,7 +4,7 @@
     <AssemblyName>$(PackageBaseName)</AssemblyName>
     <RootNamespace>RecursiveAI.OneMath</RootNamespace>
     <PackageId>$(PackageBaseName)</PackageId>
-    <Description>Deterministic math for .NET: vectors, matrices, quaternions, transcendental functions and exact predicates with identical results on every platform.</Description>
+    <Description>Deterministic math for .NET: vectors, matrices, quaternions, transcendental functions and exact predicates with identical results on every platform and across every release of a major version.</Description>
     <IsAotCompatible>true</IsAotCompatible>
     <IsTrimmable>true</IsTrimmable>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>

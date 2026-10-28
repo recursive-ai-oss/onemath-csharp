@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 The first stable release. The public API is frozen under semantic versioning. Results are bit-identical to 0.1.0-preview.5: there is no numeric change.
 
+From this release on, results are also bit-identical across every release of a major version: no 1.x minor or patch release changes an existing result (see "The determinism promise" in the README).
+
 ### Removed
 
 - `ExpansionArithmetic` is no longer public. Its preconditions are not checked (invalid input gives silently wrong results), and publishing it would freeze Shewchuk's output-size rules. It remains the internal engine behind `ExactPredicates` and `SegmentPredicates`; exposing a checked form later would be an additive change.
