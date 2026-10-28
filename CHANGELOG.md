@@ -1,6 +1,14 @@
 # Changelog
 
-All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/) with pre-release suffixes while it is in 0.x.
+All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/) with pre-release suffixes for previews.
+
+## [1.0.0]
+
+The first stable release. The public API is frozen under semantic versioning. Results are bit-identical to 0.1.0-preview.5: there is no numeric change.
+
+### Removed
+
+- `ExpansionArithmetic` is no longer public. Its preconditions are not checked (invalid input gives silently wrong results), and publishing it would freeze Shewchuk's output-size rules. It remains the internal engine behind `ExactPredicates` and `SegmentPredicates`; exposing a checked form later would be an additive change.
 
 ## [0.1.0-preview.5]
 
@@ -21,4 +29,5 @@ The first version published to nuget.org. It is a preview: public API may change
 - Preview status: no API stability promise yet.
 - The correctly rounded functions favour exactness over speed; faster opt-in variants are not part of this release.
 
+[1.0.0]: https://github.com/recursive-ai-oss/onemath-csharp/releases/tag/v1.0.0
 [0.1.0-preview.5]: https://github.com/recursive-ai-oss/onemath-csharp/releases/tag/v0.1.0-preview.5

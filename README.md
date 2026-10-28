@@ -2,7 +2,7 @@
 
 Deterministic math for .NET (`RecursiveAI.OneMath`): vectors, matrices, quaternions, elementary functions and exact geometric predicates that give the same bits on every OS, CPU, runtime, WebAssembly mode and thread count. Only IEEE-exact `+ - * /` and `sqrt` decide a result; every other function is implemented here. No dependencies beyond the .NET base class library; NativeAOT and trimming compatible.
 
-**Status: preview.** The first public version is `0.1.0-preview.5`; the API may change before 1.0. See [CHANGELOG.md](CHANGELOG.md).
+**Status: 1.0.0.** The public API is frozen under semantic versioning. Results of 1.0.0 are bit-identical to `0.1.0-preview.5`. See [CHANGELOG.md](CHANGELOG.md).
 
 ```
 dotnet add package RecursiveAI.OneMath --prerelease
