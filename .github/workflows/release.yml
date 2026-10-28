@@ -82,7 +82,7 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore OneMath.slnx
+        run: dotnet restore tests/OneMath.Tests
 
       - name: Tag matches the package version
         env:
@@ -97,9 +97,9 @@ jobs:
 
       # A tag that does not build and pass its tests never publishes.
       - name: Build
-        run: dotnet build OneMath.slnx -c Release --no-restore
+        run: dotnet build tests/OneMath.Tests -c Release --no-restore
       - name: Test
-        run: dotnet test --solution OneMath.slnx -c Release --no-build --results-directory "$ONEMATH_ARTIFACTS/TestResults"
+        run: dotnet test --project tests/OneMath.Tests -c Release --no-build --results-directory "$ONEMATH_ARTIFACTS/TestResults"
 
       - name: Pack
         # The one shipped package, from the binaries the tests ran on. Symbols come out as a .snupkg file.

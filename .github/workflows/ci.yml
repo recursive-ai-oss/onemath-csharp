@@ -36,10 +36,11 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
+      # The solution also holds the browser-wasm smoke app, which needs the wasm-tools workload; only the wasm job installs it.
       - name: Build
-        run: dotnet build OneMath.slnx -c Release
+        run: dotnet build tests/OneMath.Tests -c Release
       - name: Test
-        run: dotnet test --solution OneMath.slnx -c Release --no-build
+        run: dotnet test --project tests/OneMath.Tests -c Release --no-build
       - name: Native AOT toolchain (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang zlib1g-dev
