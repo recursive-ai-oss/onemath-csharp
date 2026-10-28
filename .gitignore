@@ -7,6 +7,9 @@
 !/BannedSymbols.txt
 !/OneMath.slnx
 !/README.md
+!/PACKAGE.md
+!/CHANGELOG.md
+!/.github
 !/LICENSE-MIT
 !/LICENSE-APACHE
 !/src
@@ -17,3 +20,5 @@
 !/testdata
 bin/
 obj/
+TestResults/
+artifacts/

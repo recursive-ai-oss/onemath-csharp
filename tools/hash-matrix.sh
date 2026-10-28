@@ -9,11 +9,11 @@
 # dropped into OUTDIR as <name>.txt and are compared by `tools/hash-matrix.sh -o OUTDIR compare`.
 #
 # Needs the .NET 10 SDK on PATH (DOTNET_ROOT set) and, for the wasm columns, the wasm-tools workload and Node.
-# Build output goes where ONEPATH_ARTIFACTS points (default ~/.cache/onemath-artifacts).
+# Build output goes where ONEMATH_ARTIFACTS (or ONEPATH_ARTIFACTS) points (default ~/.cache/onemath-artifacts).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ART="${ONEPATH_ARTIFACTS:-$HOME/.cache/onemath-artifacts}"
+ART="${ONEMATH_ARTIFACTS:-${ONEPATH_ARTIFACTS:-$HOME/.cache/onemath-artifacts}}"
 OUT="${TMPDIR:-/tmp}/hash-matrix"
 if [[ "${1:-}" == "-o" ]]; then OUT="$2"; shift 2; fi
 mkdir -p "$OUT"

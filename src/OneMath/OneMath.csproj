@@ -8,7 +8,22 @@
     <IsAotCompatible>true</IsAotCompatible>
     <IsTrimmable>true</IsTrimmable>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
+    <PackageTags>math;deterministic;determinism;lockstep;rollback;vector;matrix;quaternion;transcendental;correctly-rounded;exact-predicates;orient2d;incircle;fixed-point;nativeaot;trimmable</PackageTags>
+    <PackageReleaseNotes>See CHANGELOG.md in the repository.</PackageReleaseNotes>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- First public version: no baseline to compare against yet. Set PackageValidationBaselineVersion after each release. -->
+    <EnablePackageValidation>true</EnablePackageValidation>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../PACKAGE.md" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE-MIT" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE-APACHE" Pack="true" PackagePath="/" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Build-time analyzer only; nothing is referenced at run time. -->
