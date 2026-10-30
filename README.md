@@ -10,6 +10,7 @@ dotnet add package RecursiveAI.OneMath
 
 ```csharp
 using RecursiveAI.OneMath;
+using RecursiveAI.OneMath.Predicates;
 
 double s = Math64.Sin(1e300);                                  // correctly rounded, same on every platform
 int side = ExactPredicates.Orient2D(0, 0, 1, 0, 0.5, 1e-10);   // sign of the exact determinant: +1, -1 or 0
