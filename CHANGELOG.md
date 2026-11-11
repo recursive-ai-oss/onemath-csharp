@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/) with pre-release suffixes for previews.
 
+## [Unreleased]
+
+Additive only: no existing member or result changes.
+
+### Added
+
+- `IntervalD`: a closed interval of doubles with outward-rounded `+ - * /` (exact where the result is representable, otherwise one ulp, decided from the exact rounding error), `Square`, `Sqrt`, `Abs`, `Min`, `Max`, `Hull`, `Intersect`, `Contains`, `Overlaps`, `Width`, `Midpoint`, and enclosures of `Exp`, `Log`, `Sin`, `Cos`, `Atan2` and `Pow` (integer and general exponents) that contain this library's correctly rounded scalar results. Empty and entire intervals, division by an interval containing zero and the domain rules are in [docs/intervals.md](docs/intervals.md).
+- `Interval3D`: a box of three intervals with `+ - *`, `Dot`, `Length`, `LengthSquared`, `Abs`, `Min`, `Max`, `Hull`.
+- Hash-matrix scenarios `intervals/arith`, `intervals/functions` and `intervals/vector3`. Every earlier manifest line is unchanged.
+
 ## [1.0.0]
 
 The first stable release. The public API is frozen under semantic versioning. Results are bit-identical to 0.1.0-preview.5: there is no numeric change.
