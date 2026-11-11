@@ -2,7 +2,7 @@
 
 Deterministic math for .NET (`RecursiveAI.OneMath`): vectors, matrices, quaternions, elementary functions and exact geometric predicates that give the same bits on every OS, CPU, runtime, WebAssembly mode and thread count. Only IEEE-exact `+ - * /` and `sqrt` decide a result; every other function is implemented here. No dependencies beyond the .NET base class library; NativeAOT and trimming compatible.
 
-**Status: 1.0.0.** The public API is frozen under semantic versioning. Every result that exists in `0.1.0-preview.5` is bit-identical in 1.0.0; the additions are listed in the changelog. See [CHANGELOG.md](CHANGELOG.md).
+**Status: stable.** The public API is frozen under semantic versioning. Every result that exists in `0.1.0-preview.5` is bit-identical in 1.0.0; the additions are listed in the changelog. See [CHANGELOG.md](CHANGELOG.md).
 
 ```
 dotnet add package RecursiveAI.OneMath
@@ -22,7 +22,7 @@ long raw = FixedBridge.FromDouble(1.5);                        // Q31.32 fixed p
 - **Types:** `Vector2/3/4`, `Matrix2x2/3x3/4x4`, `Quaternion`, `Affine3`, `RigidTransform`, `Bounds2/3`, each in float (`F`) and double (`D`) form. The evaluation order of every operation is written down in [docs/evaluation-order.md](docs/evaluation-order.md), so another implementation can reproduce the bits.
 - **Elementary functions:** `Math32` and `Math64` provide sin, cos, tan, sincos, asin, acos, atan, atan2, exp, exp2, expm1, log, log2, log10, log1p, pow, cbrt, hypot, sinh, cosh and tanh. They are **correctly rounded**: the result is the float or double nearest to the exact value. How this is checked, and the error bounds of each internal stage, are in [docs/functions.md](docs/functions.md).
 - **Exact predicates:** `Orient2D`, `Orient3D`, `InCircle`, `InSphere` and segment classification, adaptive arithmetic whose fast filter always returns the sign of the exact value ([docs/predicates.md](docs/predicates.md)). Coordinates must be finite and either zero or of magnitude in [2^-140, 2^200]; **out-of-range input may throw** `ArgumentOutOfRangeException`.
-- **Interval arithmetic:** `IntervalD` (a closed double interval with outward-rounded `+ - * /`, `Square`, `Sqrt`, `Abs`, `Min`, `Max`, `Exp`, `Log`, `Sin`, `Cos`, `Atan2`, `Pow`) and `Interval3D`, guaranteed enclosures of this library's own scalar functions, for bounding a function over a region ([docs/intervals.md](docs/intervals.md)).
+- **Interval arithmetic** (unreleased; see [CHANGELOG.md](CHANGELOG.md)): `IntervalD` (a closed double interval with outward-rounded `+ - * /`, `Square`, `Sqrt`, `Abs`, `Min`, `Max`, `Exp`, `Log`, `Sin`, `Cos`, `Atan2`, `Pow`) and `Interval3D`, guaranteed enclosures of this library's own scalar functions, for bounding a function over a region ([docs/intervals.md](docs/intervals.md)).
 - **Fixed-point bridge:** conversion between a deterministic host's Q31.32 integers and double, exact for magnitudes below 2^21 and rejecting anything beyond ([docs/fixed-bridge.md](docs/fixed-bridge.md)).
 - **Physics math:** symmetric 3x3 eigen decomposition and inertia tensors ([docs/physics.md](docs/physics.md)).
 
